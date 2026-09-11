@@ -12,7 +12,9 @@
     "icons": "node scripts/generate-icons.mjs",
     "shot": "node scripts/screenshot.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "secrets": "node scripts/generate-secrets.mjs",
+    "check:env": "node scripts/check-env-example.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.22.0",
@@ -25,6 +27,7 @@
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
+    "web-push": "^3.6.7",
     "zod": "^4.6.2"
   },
   "devDependencies": {
@@ -32,6 +35,7 @@
     "@types/node": "^24.13.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "playwright": "^1.63.0",

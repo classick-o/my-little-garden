@@ -32,6 +32,9 @@ jobs:
       - name: Genereaza tipurile de rute
         run: npx next typegen
 
+      - name: Sabloanele de mediu nu contin secrete
+        run: npm run check:env
+
       - name: ESLint
         run: npm run lint
 
