@@ -133,6 +133,10 @@ stari de incarcare/goale/eroare pentru fiecare feature.
 | 2026-09-10 | Un singur mediu Supabase | Proiect personal, un utilizator |
 | 2026-09-10 | Allow-list pe email | Aplicatie privata; protejeaza si cota Gemini |
 | 2026-09-10 | Fara tema dark | Identitate vizuala construita pe off-white cald |
+| 2026-09-11 | Vercel face build si deploy din GitHub; Actions ruleaza doar verificarile si migratiile | Vercel compileaza Next.js nativ; build in Actions ar pierde preview-urile pe PR |
+| 2026-09-11 | Lista de acces in tabelul `public.allowed_emails`, nu in variabile de mediu | Verificarea in baza de date nu poate fi ocolita si se schimba fara redeploy |
+| 2026-09-11 | `next_watering_at` se calculeaza, nu se stocheaza | O singura sursa de adevar: `last_watered_at` + interval |
+| 2026-09-11 | Starea `thriving` amanata | V1 nu are semnalele care sa o justifice; nu inventam stari |
 
 ---
 

@@ -93,14 +93,21 @@ Cheia sta **numai pe server**. Nu o pune niciodata intr-o variabila `NEXT_PUBLIC
 
 ## 4. Lista de acces
 
-Aplicatia e privata. Orice cont Google se poate autentifica la Google, dar noi respingem
-pe oricine nu e in lista.
+Aplicatia e privata. Verificarea sta **in baza de date**, nu in aplicatie, ca sa nu poata
+fi ocolita: un trigger pe `auth.users` respinge inregistrarea oricarei adrese care nu e in
+tabelul `public.allowed_emails`.
 
-In `.env.local`:
+Dupa ce migratiile au fost aplicate (vezi pasul 7), intra in Supabase la **SQL Editor** si
+ruleaza:
 
+```sql
+insert into public.allowed_emails (email, note) values
+  ('adresa-ei@gmail.com', 'ea'),
+  ('adresa-ta@gmail.com', 'eu');
 ```
-ALLOWED_EMAILS=adresa-ei@gmail.com,adresa-ta@gmail.com
-```
+
+Ca sa dai acces cuiva mai tarziu, adaugi o linie aici. Ca sa il retragi, o stergi -
+contul existent ramane, dar unul nou nu se mai poate crea.
 
 ---
 
@@ -157,6 +164,10 @@ openssl rand -hex 32
 | `SUPABASE_ACCESS_TOKEN` | supabase.com/dashboard/account/tokens |
 | `SUPABASE_PROJECT_REF` | Project Settings -> General |
 | `SUPABASE_DB_PASSWORD` | parola aleasa la pasul 1 |
+
+Dupa ce le-ai adaugat, intra in tab-ul **Actions**, alege **Migratii Supabase** si apasa
+**Run workflow**. Asta creeaza schema in proiectul tau. La fiecare schimbare de schema
+comisa in `main`, workflow-ul ruleaza singur.
 
 ---
 

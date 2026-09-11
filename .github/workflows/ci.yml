@@ -1,0 +1,42 @@
+name: CI
+
+# Verificarile de cod. Build-ul si deploy-ul le face Vercel, direct din GitHub -
+# vezi CLAUDE.md, jurnalul de decizii.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # O singura rulare per branch. Un push nou o anuleaza pe cea veche.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, tipuri si teste
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instaleaza dependintele
+        run: npm ci
+
+      - name: Genereaza tipurile de rute
+        run: npx next typegen
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Verificare de tipuri
+        run: npm run typecheck
+
+      - name: Teste
+        run: npm test
