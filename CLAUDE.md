@@ -137,6 +137,7 @@ stari de incarcare/goale/eroare pentru fiecare feature.
 | 2026-09-11 | Lista de acces in tabelul `public.allowed_emails`, nu in variabile de mediu | Verificarea in baza de date nu poate fi ocolita si se schimba fara redeploy |
 | 2026-09-11 | `next_watering_at` se calculeaza, nu se stocheaza | O singura sursa de adevar: `last_watered_at` + interval |
 | 2026-09-11 | Starea `thriving` amanata | V1 nu are semnalele care sa o justifice; nu inventam stari |
+| 2026-09-11 | Model implicit `gemini-3.5-flash` | Masurat: ~13s si constant. `3.8-flash` da 503 des; `flash-lite` e de 3x mai rapid dar e un model mai slab la recunoastere fina, iar identificarea speciei e chiar miezul functiei |
 
 ---
 

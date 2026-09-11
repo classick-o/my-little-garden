@@ -11,6 +11,7 @@ Aplicatie PWA, mobile-first, in limba romana.
 | [first-context.md](first-context.md) | Specificatia produsului. Sursa de adevar. |
 | [CLAUDE.md](CLAUDE.md) | Reguli de lucru, stack, jurnalul deciziilor. |
 | [docs/setup.md](docs/setup.md) | Configurarea conturilor: Supabase, Google, Gemini, Vercel. |
+| [docs/idei-viitoare.md](docs/idei-viitoare.md) | Idei acceptate ca directie, dar amanate. |
 
 ## Pornire locala
 
