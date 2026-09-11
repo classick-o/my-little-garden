@@ -1,0 +1,158 @@
+# My little garden — reguli de lucru
+
+## Sursa de adevar
+
+[first-context.md](first-context.md) este **documentul principal de context** al proiectului.
+Citeste-l inainte de a implementa sau modifica orice feature.
+
+Acest fisier (`CLAUDE.md`) nu il inlocuieste. El:
+1. inregistreaza deciziile luate impreuna cu proprietarul proiectului
+2. mapeaza sectiunile scrise pentru Flutter din `first-context.md` pe stack-ul real (Next.js)
+
+Unde acest fisier contrazice `first-context.md`, **acest fisier castiga** — dar numai pentru
+punctele listate explicit mai jos. Pentru tot restul, `first-context.md` ramane obligatoriu.
+
+---
+
+## 1. Produs
+
+| | |
+|---|---|
+| Nume | **My little garden** (brand in engleza, nu se traduce) |
+| Utilizatori | Privat — o singura persoana. Acces prin **allow-list pe email**. |
+| Platforma tinta | iPhone, Safari, PWA instalat pe Home Screen |
+| Viewport principal | 390–430px |
+
+## 2. Limba
+
+**Tot textul vizibil pentru utilizator este in romana, fara diacritice.**
+
+Se aplica la:
+* interfata (butoane, titluri, etichete, stari goale, mesaje de eroare)
+* copy-ul de onboarding
+* **raspunsurile AI-ului** — promptul trebuie sa ceara explicit romana fara diacritice
+* notificari push
+
+Nu se traduc: numele de brand „My little garden", numele stiintifice ale plantelor
+(`Monstera deliciosa`), termenii tehnici din cod.
+
+Numele de variabile, functii, tabele, rute si mesajele de commit raman in **engleza**.
+Comentariile din cod si documentatia interna se scriu in **romana fara diacritice**,
+ca sa fie citibile de proprietarul proiectului.
+
+Exemple de ton (vezi si sectiunile 88–90 din `first-context.md`):
+
+```
+Buna seara
+Gradina ta mica
+Uda planta
+Descopera o planta
+Intreaba asistentul
+Gradina ta te asteapta
+Gata. Luna e fericita
+```
+
+## 3. Stack — inlocuieste sectiunile 4, 56, 57, 58 din first-context.md
+
+| Strat | Tehnologie |
+|---|---|
+| Frontend | Next.js (App Router) + React + TypeScript |
+| Stilizare | Tailwind CSS |
+| Hosting | Vercel (domeniu implicit `*.vercel.app`) |
+| Backend | Supabase — Postgres, Auth, Storage, RLS |
+| Auth | Google OAuth via Supabase Auth |
+| AI | Gemini, apelat **exclusiv** din Route Handlers Next.js |
+| Notificari | Web Push (VAPID) + service worker |
+| Medii | **Unul singur** (productie). Migratiile se aplica automat pe `main`. |
+
+### Supabase Edge Functions — nu se folosesc
+
+Sectiunea 67 din `first-context.md` cerea Edge Functions pentru ca frontend-ul Flutter
+nu avea server propriu. Next.js are. Logica AI sta in Route Handlers pe Vercel.
+
+Cerinta reala — **secretele nu ajung niciodata in browser** — ramane obligatorie.
+
+### Straturi
+
+```
+Server Component / Client Component
+        v
+hook / server action
+        v
+repository            <- singurul loc care vorbeste cu Supabase
+        v
+Supabase
+```
+
+Pentru AI:
+
+```
+UI  ->  Route Handler (server)  ->  AIService  ->  Gemini  ->  validare  ->  Supabase
+```
+
+Interzis: apeluri Supabase sau `fetch` direct din componente de prezentare.
+
+## 4. Notificari — constrangeri reale
+
+* Web Push pe iOS functioneaza **numai** pe iOS 16.4+ **si numai** cu aplicatia instalata
+  pe Home Screen. Din Safari obisnuit nu functioneaza deloc.
+* Onboarding-ul trebuie sa ghideze explicit „Adauga pe ecranul principal", altfel
+  utilizatorul nu primeste nimic si nu intelege de ce.
+* Cererea de permisiune trebuie declansata de o actiune a utilizatorului, niciodata automat.
+* Trimiterea se face dintr-un cron. Vercel Hobby permite **o rulare pe zi** — suficient
+  pentru sumarul de dimineata. Pentru frecventa mai mare se muta pe `pg_cron` in Supabase.
+* Sectiunea 43 ramane valabila: fara spam.
+
+## 5. Tema
+
+**Doar light.** Nu se implementeaza tema dark.
+
+Paleta: off-white cald, verzuri naturale retinute, culori inspirate din natura.
+Verdele nu se pune pe fiecare componenta (sectiunea 7).
+
+## 6. Reguli care raman neschimbate din first-context.md
+
+Sectiunea 81 se aplica integral, cu aceste traduceri de stack:
+
+* „Do not put Supabase queries inside presentation widgets" -> nu in componente React
+* „Do not expose secrets in Flutter Web" -> nimic secret in cod client sau in
+  variabile `NEXT_PUBLIC_*`
+* „Reuse the existing design system" -> verifica `src/components/ui` inainte de a
+  crea o componenta noua
+
+Raman obligatorii si: RLS pe toate tabelele, migratii pentru orice schimbare de schema,
+output AI structurat si validat, context AI construit intentionat, mobile-first la 390px,
+stari de incarcare/goale/eroare pentru fiecare feature.
+
+## 7. Jurnal de decizii
+
+| Data | Decizie | Motiv |
+|---|---|---|
+| 2026-09-10 | Next.js in loc de Flutter Web | Bundle mult mai mic pe iOS, PWA si Web Push mai bune, deploy nativ pe Vercel |
+| 2026-09-10 | Fara Supabase Edge Functions | Next.js are deja server; un singur target de deploy |
+| 2026-09-10 | Un singur mediu Supabase | Proiect personal, un utilizator |
+| 2026-09-10 | Allow-list pe email | Aplicatie privata; protejeaza si cota Gemini |
+| 2026-09-10 | Fara tema dark | Identitate vizuala construita pe off-white cald |
+
+---
+
+## 8. Next.js
+
+Acest proiect foloseste Next.js 16, care are schimbari incompatibile fata de versiunile
+anterioare. Citeste regulile generate automat inainte de a scrie cod de framework:
+
+@AGENTS.md
+
+### Capcane Next.js 16 (verificate in `node_modules/next/dist/docs`)
+
+* **`middleware.ts` nu mai exista** — se numeste `proxy.ts`, functia exportata se numeste
+  `proxy`, ruleaza pe runtime `nodejs` (nu edge, si nu e configurabil).
+  Ghidurile Supabase de pe internet inca zic `middleware` — sunt depasite.
+* **`cookies()`, `headers()`, `params`, `searchParams` sunt async.** Accesul sincron a fost
+  eliminat complet. Intotdeauna `await`.
+* **`revalidateTag` cere al doilea argument** (profil `cacheLife`), ex. `revalidateTag('x', 'max')`.
+  Pentru „vezi imediat ce ai schimbat" foloseste `updateTag(tag)` din Server Actions.
+* **`cacheLife` / `cacheTag`** sunt stabile, fara prefix `unstable_`.
+* **Turbopack e implicit.**
+* Tipuri pentru rute: `npx next typegen` genereaza `PageProps<'/ruta'>`, `LayoutProps`, `RouteContext`.
+* Route Handlers nu sunt cache-uite implicit — exact ce vrem pentru rutele de AI.

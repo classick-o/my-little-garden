@@ -1,0 +1,8 @@
+# Linii normalizate: LF in repo, indiferent de sistemul de operare.
+# CI ruleaza pe Linux, dezvoltarea pe Windows.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.jpg binary
+*.webp binary

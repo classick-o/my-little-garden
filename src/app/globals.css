@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   My little garden - design tokens
+   Referinta: first-context.md sectiunile 6, 7, 9, 59
+   Off-white cald, verzuri naturale retinute, fara saturatie.
+   Tema light exclusiv - vezi CLAUDE.md sectiunea 5.
+   ========================================================================== */
+
+@theme {
+  /* --- Culori: fundal si suprafete ------------------------------------- */
+  --color-canvas: #faf7f2; /* fundalul aplicatiei, off-white cald */
+  --color-surface: #ffffff; /* carduri */
+  --color-surface-sunken: #f2eee5; /* zone retrase, skeleton */
+  --color-surface-raised: #fffdf9; /* carduri peste carduri */
+
+  /* --- Culori: text ---------------------------------------------------- */
+  --color-ink: #2b2f29; /* text principal, negru cald usor verzui */
+  --color-ink-muted: #6a6f66; /* text secundar */
+  --color-ink-subtle: #9aa093; /* text tertiar, etichete */
+  --color-ink-inverse: #fbfaf7;
+
+  /* --- Culori: contur -------------------------------------------------- */
+  --color-line: #e8e2d6; /* contur implicit, foarte discret */
+  --color-line-strong: #d6cfbe;
+
+  /* --- Culori: verde (identitatea) ------------------------------------- */
+  --color-leaf: #4a6b52; /* verde principal, actiuni */
+  --color-leaf-deep: #38513e; /* hover / apasat */
+  --color-leaf-soft: #e6ede4; /* fundal discret */
+  --color-leaf-tint: #f1f5ef;
+
+  /* --- Culori: apa (udare) --------------------------------------------- */
+  --color-water: #6d95af;
+  --color-water-soft: #e5edf2;
+
+  /* --- Culori: soare / atentie ----------------------------------------- */
+  --color-sun: #c8963f;
+  --color-sun-soft: #f6eeda;
+
+  /* --- Culori: pamant / accent cald ------------------------------------ */
+  --color-soil: #b5714c;
+  --color-soil-soft: #f5e8e0;
+
+  /* --- Culori: eroare -------------------------------------------------- */
+  --color-wilt: #a8544a;
+  --color-wilt-soft: #f6e5e3;
+
+  /* --- Tipografie ------------------------------------------------------ */
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* --- Raze (carduri mari, rotunjite - sectiunea 7) -------------------- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+
+  /* --- Umbre (discrete, colorate cald - nu negru pur) ------------------ */
+  --shadow-soft: 0 1px 2px rgba(58, 50, 38, 0.04),
+    0 2px 8px rgba(58, 50, 38, 0.04);
+  --shadow-card: 0 1px 2px rgba(58, 50, 38, 0.05),
+    0 6px 20px rgba(58, 50, 38, 0.06);
+  --shadow-raised: 0 2px 4px rgba(58, 50, 38, 0.06),
+    0 12px 32px rgba(58, 50, 38, 0.09);
+  --shadow-float: 0 4px 10px rgba(58, 50, 38, 0.08),
+    0 18px 48px rgba(58, 50, 38, 0.12);
+
+  /* --- Durate de animatie (sectiunea 9: 150-350ms) --------------------- */
+  --duration-instant: 120ms;
+  --duration-quick: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 340ms;
+
+  /* --- Curbe ----------------------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ==========================================================================
+   Baza
+   ========================================================================== */
+
+:root {
+  color-scheme: light; /* fara tema dark - CLAUDE.md sectiunea 5 */
+
+  /* Inaltimea barii de navigatie, folosita pentru padding-ul paginilor. */
+  --nav-height: 64px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%; /* Safari iOS nu mareste textul in landscape */
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px; /* sub 16px Safari iOS face zoom la focus pe input */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /* PWA: fara bounce si fara selectie accidentala la apasare lunga. */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Textul din continut ramane selectabil; interfata nu. */
+button,
+a,
+[role="button"] {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Titlurile folosesc fontul display. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+/* Focus vizibil si accesibil (sectiunea 82). */
+:focus-visible {
+  outline: 2px solid var(--color-leaf);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   Utilitare
+   ========================================================================== */
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Latimea maxima a continutului: mobile-first, dar nu intins la infinit
+   pe desktop (sectiunea 83). */
+@utility content-width {
+  width: 100%;
+  max-width: 30rem; /* 480px */
+  margin-inline: auto;
+}
+
+/* Suprafata de atingere de minim 44px chiar daca elementul e vizual mai mic
+   (sectiunea 82: touch targets mari). */
+@utility tap-target {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    translate: -50% -50%;
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* ==========================================================================
+   Miscare redusa (sectiunea 82)
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
