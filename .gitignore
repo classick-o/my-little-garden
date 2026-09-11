@@ -48,3 +48,6 @@ next-env.d.ts
 
 # capturi de ecran locale
 /.screenshots/
+
+# poze descarcate pentru verificarile cu AI
+/.fixtures/

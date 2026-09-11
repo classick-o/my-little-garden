@@ -13,13 +13,28 @@ import { z } from "zod";
  * acolo unde e nevoie - ele ajung oricum in browser prin design.
  */
 
+/**
+ * O variabila optionala, cu valoare implicita.
+ *
+ * `Z.default()` se aplica doar cand variabila lipseste complet. Dar o linie
+ * `GEMINI_MODEL=` intr-un fisier .env, sau un camp lasat gol in Vercel,
+ * inseamna sirul gol - nu absenta. Fara conversia asta, o variabila optionala
+ * lasata necompletata ar opri aplicatia.
+ */
+function optional(fallback: string) {
+  return z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().min(1).default(fallback),
+  );
+}
+
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   GEMINI_API_KEY: z.string().min(1),
 
-  /* Modelul se poate schimba fara sa modificam codul. Verifica in Google AI
-     Studio ce modele are cheia ta pe planul gratuit inainte sa il schimbi. */
-  GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+  /* Modelul se poate schimba fara sa modificam codul.
+     `npm run models` arata ce modele accepta cheia ta. */
+  GEMINI_MODEL: optional("gemini-3.5-flash"),
 });
 
 type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -38,7 +53,7 @@ export function serverEnv(): ServerEnv {
   const parsed = serverEnvSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    const missing = Object.keys(parsed.error.flatten().fieldErrors).join(", ");
+    const missing = Object.keys(z.flattenError(parsed.error).fieldErrors).join(", ");
     throw new Error(
       `Variabile de mediu lipsa sau invalide: ${missing}. Vezi docs/setup.md.`,
     );

@@ -22,6 +22,33 @@ import type { AIResult, AIService, ImageInput } from "./types";
 /* Schema se calculeaza o singura data, nu la fiecare cerere. */
 const IDENTIFICATION_RESPONSE_SCHEMA = toGeminiSchema(plantIdentificationSchema);
 
+/* Cate incercari facem cand modelul e supraincarcat. Al doilea 503 la rand
+   inseamna de obicei ca nu trece imediat, deci nu insistam mai mult - poza a
+   fost deja incarcata si utilizatorul asteapta. */
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1200;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Reincearca doar erorile despre care stim ca trec de la sine. */
+async function withRetry<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError: AIError | undefined;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = classifyProviderError(error);
+
+      if (!lastError.retryable || attempt === MAX_ATTEMPTS) break;
+
+      await wait(RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError ?? new AIError("unknown");
+}
+
 let client: GoogleGenAI | null = null;
 
 function geminiClient(apiKey: string): GoogleGenAI {
@@ -37,9 +64,7 @@ export function createGeminiService(): AIService {
     async identifyPlant(
       image: ImageInput,
     ): Promise<AIResult<PlantIdentification>> {
-      let rawText: string | undefined;
-
-      try {
+      const rawText = await withRetry(async () => {
         const response = await ai.models.generateContent({
           model: env.GEMINI_MODEL,
           contents: [
@@ -64,10 +89,8 @@ export function createGeminiService(): AIService {
           },
         });
 
-        rawText = response.text;
-      } catch (error) {
-        throw classifyProviderError(error);
-      }
+        return response.text;
+      });
 
       if (!rawText) {
         throw new AIError("invalid_response");

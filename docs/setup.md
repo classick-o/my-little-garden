@@ -89,6 +89,26 @@ cp .env.example .env.local
 
 Cheia sta **numai pe server**. Nu o pune niciodata intr-o variabila `NEXT_PUBLIC_*`.
 
+### Ce model foloseste aplicatia
+
+Implicit `gemini-3.5-flash`. Ca sa vezi ce modele accepta cheia ta:
+
+```bash
+npm run models
+```
+
+Ca sa folosesti altul, completeaza `GEMINI_MODEL` in `.env.local`. Lasat gol, se
+foloseste cel implicit.
+
+Dupa orice schimbare de model sau de prompt, verifica rezultatul cu o cerere reala:
+
+```bash
+npm run smoke:ai
+```
+
+Comanda descarca o poza de test, cere identificarea si verifica raspunsul - inclusiv
+faptul ca e in romana fara diacritice. Nu ruleaza in CI, ca sa nu consume cota.
+
 ---
 
 ## 4. Lista de acces

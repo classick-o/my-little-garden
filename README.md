@@ -32,6 +32,11 @@ npm run dev
 | `npm run typecheck` | Verificare de tipuri |
 | `npm run icons` | Regenereaza iconitele PWA din `scripts/generate-icons.mjs` |
 | `npm run shot` | Capturi de ecran la 390x844 (serverul de dev trebuie sa ruleze) |
+| `npm test` | Teste |
+| `npm run models` | Ce modele Gemini accepta cheia ta |
+| `npm run smoke:ai` | Verificare cu o cerere reala catre Gemini (consuma cota) |
+| `npm run secrets` | Genereaza cheile VAPID si secretul de cron in `.env.local` |
+| `npm run check:env` | Verifica faptul ca `.env.example` nu contine valori reale |
 
 Exemplu: `npm run shot -- discover journal`
 
