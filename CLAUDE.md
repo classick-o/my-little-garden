@@ -103,6 +103,20 @@ Interzis: apeluri Supabase sau `fetch` direct din componente de prezentare.
   pentru sumarul de dimineata. Pentru frecventa mai mare se muta pe `pg_cron` in Supabase.
 * Sectiunea 43 ramane valabila: fara spam.
 
+## 4b. Asset-uri vizuale
+
+Imaginile, ilustratiile si iconitele aplicatiei se genereaza cu **MCP-ul 3D AI Studio**,
+nu cu scripturi locale si nu luate de pe internet.
+
+Se aplica la: iconite, ilustratii pentru starile goale, imagini de fundal, poze de
+substituire pentru demonstratii, orice grafica de produs.
+
+Rezultatele se salveaza in `public/` si se comit in repo, ca sa nu depindem de un
+serviciu extern la rulare.
+
+Nu se aplica la pozele plantelor facute de utilizator - acelea vin din camera si ajung
+in Supabase Storage.
+
 ## 5. Tema
 
 **Doar light.** Nu se implementeaza tema dark.
