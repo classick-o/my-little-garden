@@ -1,6 +1,9 @@
 import Image from "next/image";
 import { Bell, Droplets, Leaf, Plus, ScanLine, Search, Sun } from "lucide-react";
 
+import { ProgressRing } from "@/components/preview/ProgressRing";
+import { VariantSwitcher } from "@/components/preview/VariantSwitcher";
+
 /**
  * PREVIZUALIZARE - nu face parte din aplicatie.
  *
@@ -26,7 +29,7 @@ export default function DarkPreviewPage() {
     <div className="relative min-h-dvh overflow-hidden bg-[#13402a] text-white">
       <Glow />
 
-      <div className="relative mx-auto w-full max-w-[30rem] px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-10">
+      <div className="relative mx-auto w-full max-w-[30rem] px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-28">
         <Header />
         <SearchField />
         <DiagnosisCard />
@@ -37,6 +40,8 @@ export default function DarkPreviewPage() {
           Adauga o planta
         </button>
       </div>
+
+      <VariantSwitcher />
     </div>
   );
 }
@@ -122,56 +127,24 @@ function DiagnosisCard() {
       </button>
 
       <div className="mt-5 flex items-center gap-5">
-        <Ring label="Udate" value={5} total={7} accent="#4ade80" />
-        <Ring label="Sanatoase" value={8} total={9} accent="#86efac" />
+        <ProgressRing
+          label="Udate"
+          value={5}
+          total={7}
+          accent="#4ade80"
+          track="rgba(255,255,255,0.15)"
+          valueClassName="text-white/50"
+        />
+        <ProgressRing
+          label="Sanatoase"
+          value={8}
+          total={9}
+          accent="#86efac"
+          track="rgba(255,255,255,0.15)"
+          valueClassName="text-white/50"
+        />
       </div>
     </section>
-  );
-}
-
-type RingProps = {
-  label: string;
-  value: number;
-  total: number;
-  accent: string;
-};
-
-/** Inel de progres desenat cu SVG, fara nicio librarie. */
-function Ring({ label, value, total, accent }: RingProps) {
-  const radius = 16;
-  const circumference = 2 * Math.PI * radius;
-  const filled = circumference * (value / total);
-
-  return (
-    <div className="flex items-center gap-3">
-      <svg viewBox="0 0 40 40" className="size-11 -rotate-90">
-        <circle
-          cx="20"
-          cy="20"
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="4"
-        />
-        <circle
-          cx="20"
-          cy="20"
-          r={radius}
-          fill="none"
-          stroke={accent}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={`${filled} ${circumference}`}
-        />
-      </svg>
-
-      <div className="leading-tight">
-        <p className="text-[13px] font-medium">{label}</p>
-        <p className="text-[12px] text-white/50">
-          {value} din {total}
-        </p>
-      </div>
-    </div>
   );
 }
 

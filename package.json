@@ -16,7 +16,8 @@
     "secrets": "node scripts/generate-secrets.mjs",
     "check:env": "node scripts/check-env-example.mjs",
     "models": "node --env-file=.env.local scripts/list-models.mjs",
-    "smoke:ai": "node --env-file=.env.local ./node_modules/vitest/vitest.mjs run --config vitest.live.config.mts"
+    "smoke:ai": "node --env-file=.env.local ./node_modules/vitest/vitest.mjs run --config vitest.live.config.mts",
+    "dev:lan": "next dev -H 0.0.0.0"
   },
   "dependencies": {
     "@google/genai": "^2.22.0",
