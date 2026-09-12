@@ -1,9 +1,9 @@
 # Configurare conturi si servicii
 
-Pasii pe care trebuie sa ii faci tu, in ordinea asta. Dureaza in jur de 30 de minute.
+Pasii pe care trebuie sa ii faci tu, **in ordinea asta**. Ordinea conteaza: fiecare pas
+produce o valoare de care are nevoie urmatorul. Dureaza in jur de 40 de minute.
 
-Dupa fiecare sectiune ai de copiat niste valori in `.env.local`. Porneste prin a copia
-sablonul:
+Porneste prin a copia sablonul de variabile:
 
 ```bash
 cp .env.example .env.local
@@ -24,25 +24,48 @@ cp .env.example .env.local
    * **Database Password**: genereaza una si **salveaz-o** (o folosim la migratii)
    * **Region**: `Central EU (Frankfurt)` — cea mai apropiata de Romania
 3. Asteapta ~2 minute sa se provizioneze.
-4. Mergi la **Project Settings -> API** si copiaza in `.env.local`:
+4. Din **Project Settings -> API** (sau **API Keys**, in interfata noua) copiaza in
+   `.env.local`:
 
    | Din dashboard | In `.env.local` |
    |---|---|
    | Project URL | `NEXT_PUBLIC_SUPABASE_URL` |
-   | `anon` `public` | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
-   | `service_role` `secret` | `SUPABASE_SERVICE_ROLE_KEY` |
+   | cheia publica (`anon` sau `sb_publishable_...`) | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+   | cheia secreta (`service_role` sau `sb_secret_...`) | `SUPABASE_SERVICE_ROLE_KEY` |
 
-5. Noteaza-ti si **Project Reference ID** (din **Project Settings -> General**).
-   Arata ca `abcdefghijklmnop`. Il folosim la pasul urmator.
+5. Noteaza-ti si **Project Reference ID** din **Project Settings -> General**.
+   Arata ca `abcdefghijklmnop`. Il folosesti la pasul 3.
 
-> Cheia `service_role` **ocoleste complet Row Level Security**. Sta doar pe server,
-> niciodata intr-o variabila `NEXT_PUBLIC_*`.
+> Cheia secreta **ocoleste complet Row Level Security**. Sta doar pe server, niciodata
+> intr-o variabila `NEXT_PUBLIC_*`.
 
 ---
 
-## 2. Google OAuth
+## 2. Vercel — primul deploy
 
-### 2a. Proiect si ecran de consimtamant
+Il facem **acum**, inaintea lui Google, fiindca de aici afli domeniul aplicatiei.
+Aplicatia se construieste si fara nicio cheie, deci primul deploy merge din prima.
+
+1. [vercel.com/new](https://vercel.com/new) -> **Import Git Repository**.
+2. Daca nu e deja legat, conecteaza contul de GitHub si autorizeaza accesul la
+   `classick-o/my-little-garden`.
+3. Framework Preset: **Next.js**, detectat automat. Nu schimba comenzile de build.
+4. **Nu adauga inca variabile de mediu.** Apasa **Deploy**.
+5. Noteaza domeniul rezultat, de forma `my-little-garden-xxxx.vercel.app`.
+   **Asta e valoarea de care are nevoie tot restul ghidului.**
+
+### Regiunea
+
+Repo-ul contine un `vercel.json` care cere regiunea `fra1` (Frankfurt), ca sa fie langa
+baza de date. Daca planul tau nu permite alegerea regiunii din fisier, seteaz-o din
+**Project Settings -> Functions -> Region**. Fara asta, fiecare interogare face un drum
+pana in Statele Unite si inapoi.
+
+---
+
+## 3. Google OAuth
+
+### 3a. Proiect si ecran de consimtamant
 
 1. [console.cloud.google.com](https://console.cloud.google.com) -> creeaza un proiect nou,
    `My little garden`.
@@ -56,11 +79,11 @@ cp .env.example .env.local
    Aplicatia ramane in modul **Testing**. E suficient: permite pana la 100 de utilizatori
    si nu necesita verificare de la Google.
 
-### 2b. Client OAuth
+### 3b. Client OAuth
 
 1. **APIs & Services -> Credentials -> Create Credentials -> OAuth client ID**
 2. Application type: **Web application**
-3. **Authorized JavaScript origins**:
+3. **Authorized JavaScript origins** — domeniul aplicatiei, de la pasul 2:
    ```
    http://localhost:3000
    https://<domeniul-tau>.vercel.app
@@ -71,7 +94,7 @@ cp .env.example .env.local
    ```
 5. Copiaza **Client ID** si **Client secret**.
 
-### 2c. Leaga-le de Supabase
+### 3c. Leaga-le de Supabase
 
 1. In Supabase: **Authentication -> Sign In / Providers -> Google** -> activeaza.
 2. Lipeste Client ID si Client Secret. Salveaza.
@@ -81,13 +104,13 @@ cp .env.example .env.local
 
 ---
 
-## 3. Gemini
+## 4. Gemini
 
 1. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) -> **Create API key**.
-   Poti folosi acelasi proiect Google Cloud de mai sus.
+   Poti folosi acelasi proiect Google Cloud.
 2. Pune cheia in `.env.local` la `GEMINI_API_KEY`.
 
-Cheia sta **numai pe server**. Nu o pune niciodata intr-o variabila `NEXT_PUBLIC_*`.
+Cheia sta **numai pe server**. Niciodata intr-o variabila `NEXT_PUBLIC_*`.
 
 ### Ce model foloseste aplicatia
 
@@ -106,19 +129,69 @@ Dupa orice schimbare de model sau de prompt, verifica rezultatul cu o cerere rea
 npm run smoke:ai
 ```
 
-Comanda descarca o poza de test, cere identificarea si verifica raspunsul - inclusiv
+Comanda descarca o poza de test, cere identificarea si verifica raspunsul — inclusiv
 faptul ca e in romana fara diacritice. Nu ruleaza in CI, ca sa nu consume cota.
 
 ---
 
-## 4. Lista de acces
+## 5. Chei generate local
+
+Cheile pentru notificari si secretul de cron nu se iau de nicaieri, se genereaza:
+
+```bash
+npm run secrets
+```
+
+Comanda scrie direct in `.env.local` si nu atinge valorile deja completate.
+
+> Notificarile pe iPhone functioneaza **doar** din iOS 16.4+ si **doar** daca aplicatia e
+> adaugata pe ecranul principal. Din Safari obisnuit nu ajunge nimic.
+
+---
+
+## 6. Variabilele in Vercel
+
+Acum ca `.env.local` e complet, muta aceleasi valori in Vercel:
+**Project Settings -> Environment Variables**.
+
+Adauga tot ce e in `.env.local`, cu o singura diferenta:
+
+| Variabila | Valoare in Vercel |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://<domeniul-tau>.vercel.app`, nu `localhost` |
+
+Restul se copiaza identic. `DB_PASS` nu e folosit de aplicatie — parola bazei de date
+merge doar in GitHub Secrets, la pasul urmator.
+
+Dupa ce le-ai adaugat, declanseaza un **Redeploy**: variabilele nu se aplica retroactiv
+deployment-ului existent.
+
+---
+
+## 7. GitHub Secrets si migratiile
+
+**Settings -> Secrets and variables -> Actions -> New repository secret**:
+
+| Secret | De unde |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens) |
+| `SUPABASE_PROJECT_REF` | Project Settings -> General |
+| `SUPABASE_DB_PASSWORD` | parola aleasa la pasul 1 |
+
+Apoi intra in tab-ul **Actions**, alege **Migratii Supabase** si apasa **Run workflow**.
+Asta creeaza schema in proiectul tau.
+
+La fiecare schimbare de schema comisa in `main`, workflow-ul ruleaza singur.
+
+---
+
+## 8. Lista de acces
 
 Aplicatia e privata. Verificarea sta **in baza de date**, nu in aplicatie, ca sa nu poata
 fi ocolita: un trigger pe `auth.users` respinge inregistrarea oricarei adrese care nu e in
 tabelul `public.allowed_emails`.
 
-Dupa ce migratiile au fost aplicate (vezi pasul 7), intra in Supabase la **SQL Editor** si
-ruleaza:
+Dupa ce migratiile au rulat, intra in Supabase la **SQL Editor** si ruleaza:
 
 ```sql
 insert into public.allowed_emails (email, note) values
@@ -126,76 +199,18 @@ insert into public.allowed_emails (email, note) values
   ('adresa-ta@gmail.com', 'eu');
 ```
 
-Ca sa dai acces cuiva mai tarziu, adaugi o linie aici. Ca sa il retragi, o stergi -
+Ca sa dai acces cuiva mai tarziu, adaugi o linie aici. Ca sa il retragi, o stergi —
 contul existent ramane, dar unul nou nu se mai poate crea.
-
----
-
-## 5. Chei pentru notificari
-
-Genereaza perechea VAPID:
-
-```bash
-npx web-push generate-vapid-keys
-```
-
-Pune rezultatul in `.env.local`:
-
-```
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=<Public Key>
-VAPID_PRIVATE_KEY=<Private Key>
-VAPID_SUBJECT=mailto:adresa-ta@gmail.com
-```
-
-Si un secret care protejeaza ruta de cron:
-
-```bash
-openssl rand -hex 32
-```
-
--> `CRON_SECRET`
-
-> Notificarile pe iPhone functioneaza **doar** din iOS 16.4+ si **doar** daca aplicatia e
-> adaugata pe ecranul principal. Din Safari obisnuit nu ajunge nimic.
-
----
-
-## 6. Vercel
-
-1. [vercel.com/new](https://vercel.com/new) -> **Import Git Repository**.
-2. Daca nu e deja legat, conecteaza contul de GitHub si autorizeaza accesul la
-   `classick-o/my-little-garden`.
-3. Framework Preset: **Next.js** (se detecteaza singur). Nu schimba nimic la build.
-4. Inainte de primul deploy, la **Environment Variables**, adauga tot ce e in `.env.local`
-   **fara** `NEXT_PUBLIC_SITE_URL` (pe care il setezi la domeniul de productie).
-5. Deploy. Noteaza domeniul rezultat si intoarce-te sa il pui la:
-   * `NEXT_PUBLIC_SITE_URL` in Vercel
-   * Authorized JavaScript origins in Google Cloud (pasul 2b)
-   * Site URL in Supabase (pasul 2c)
-
----
-
-## 7. GitHub Secrets
-
-**Settings -> Secrets and variables -> Actions -> New repository secret**:
-
-| Secret | De unde |
-|---|---|
-| `SUPABASE_ACCESS_TOKEN` | supabase.com/dashboard/account/tokens |
-| `SUPABASE_PROJECT_REF` | Project Settings -> General |
-| `SUPABASE_DB_PASSWORD` | parola aleasa la pasul 1 |
-
-Dupa ce le-ai adaugat, intra in tab-ul **Actions**, alege **Migratii Supabase** si apasa
-**Run workflow**. Asta creeaza schema in proiectul tau. La fiecare schimbare de schema
-comisa in `main`, workflow-ul ruleaza singur.
 
 ---
 
 ## Verificare
 
+Local:
+
 ```bash
 npm run dev
 ```
 
-Deschide `http://localhost:3000`. Daca aplicatia porneste si te poti autentifica,
-configurarea e completa.
+In productie: deschide domeniul de pe Vercel de pe telefon si adauga aplicatia pe ecranul
+principal. Daca porneste si te poti autentifica cu Google, configurarea e completa.
