@@ -26,7 +26,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navigare principala"
-      className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas/85 backdrop-blur-xl"
+      className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas-deep/70 backdrop-blur-2xl"
     >
       <div className="content-width grid grid-cols-5 items-end px-2">
         {TABS.slice(0, 2).map((tab) => (

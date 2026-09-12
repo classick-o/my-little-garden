@@ -1,3 +1,4 @@
+import { Backdrop } from "@/components/app-shell/Backdrop";
 import { BottomNav } from "@/components/app-shell/BottomNav";
 
 /**
@@ -7,6 +8,8 @@ import { BottomNav } from "@/components/app-shell/BottomNav";
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <>
+      <Backdrop />
+
       <main className="content-width flex-1 px-5 pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(var(--nav-height)+env(safe-area-inset-bottom)+1rem)]">
         {children}
       </main>

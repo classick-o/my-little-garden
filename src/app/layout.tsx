@@ -31,7 +31,8 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: APP_NAME,
-    statusBarStyle: "default",
+    /* Bara de sistem alba peste fundalul verde inchis. */
+    statusBarStyle: "black-translucent",
   },
   formatDetection: {
     telephone: false,
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#faf7f2",
+  themeColor: "#13402a",
   width: "device-width",
   initialScale: 1,
   /* Zoom-ul ramane permis intentionat - accesibilitate, first-context.md sectiunea 82. */

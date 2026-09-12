@@ -3,48 +3,50 @@
 /* ==========================================================================
    My little garden - design tokens
    Referinta: first-context.md sectiunile 6, 7, 9, 59
-   Off-white cald, verzuri naturale retinute, fara saturatie.
-   Tema light exclusiv - vezi CLAUDE.md sectiunea 5.
+
+   Tema intunecata: verde profund, carduri de sticla, verde viu ca accent.
+   Directie aleasa pe 12 septembrie 2026 - vezi CLAUDE.md sectiunea 5.
+   Nu exista tema luminoasa.
    ========================================================================== */
 
 @theme {
   /* --- Culori: fundal si suprafete ------------------------------------- */
-  --color-canvas: #faf7f2; /* fundalul aplicatiei, off-white cald */
-  --color-surface: #ffffff; /* carduri */
-  --color-surface-sunken: #f2eee5; /* zone retrase, skeleton */
-  --color-surface-raised: #fffdf9; /* carduri peste carduri */
+  --color-canvas: #13402a; /* verdele de baza al aplicatiei */
+  --color-canvas-deep: #06150d; /* umbre, valuri peste poze, vigneta */
+
+  /* Suprafetele sunt translucide: au nevoie de fundal in spate ca sa arate
+     a sticla. Se folosesc impreuna cu backdrop-blur. */
+  --color-surface: rgba(255, 255, 255, 0.1);
+  --color-surface-strong: rgba(255, 255, 255, 0.16);
+  --color-surface-sunken: rgba(0, 0, 0, 0.2);
 
   /* --- Culori: text ---------------------------------------------------- */
-  --color-ink: #2b2f29; /* text principal, negru cald usor verzui */
-  --color-ink-muted: #6a6f66; /* text secundar */
-  --color-ink-subtle: #9aa093; /* text tertiar, etichete */
-  --color-ink-inverse: #fbfaf7;
+  --color-ink: #ffffff;
+  --color-ink-muted: rgba(255, 255, 255, 0.65);
+  --color-ink-subtle: rgba(255, 255, 255, 0.45);
+  --color-ink-inverse: #0b1f14; /* text pe butoanele albe si pe verdele viu */
 
   /* --- Culori: contur -------------------------------------------------- */
-  --color-line: #e8e2d6; /* contur implicit, foarte discret */
-  --color-line-strong: #d6cfbe;
+  --color-line: rgba(255, 255, 255, 0.15);
+  --color-line-strong: rgba(255, 255, 255, 0.28);
 
   /* --- Culori: verde (identitatea) ------------------------------------- */
-  --color-leaf: #4a6b52; /* verde principal, actiuni */
-  --color-leaf-deep: #38513e; /* hover / apasat */
-  --color-leaf-soft: #e6ede4; /* fundal discret */
-  --color-leaf-tint: #f1f5ef;
+  --color-leaf: #4ade80; /* accentul viu: butoane, iconite active */
+  --color-leaf-deep: #22c55e;
+  --color-leaf-bright: #8ef2a8; /* lumina din fundal */
+  --color-leaf-soft: rgba(74, 222, 128, 0.16);
 
   /* --- Culori: apa (udare) --------------------------------------------- */
-  --color-water: #6d95af;
-  --color-water-soft: #e5edf2;
+  --color-water: #7dd3fc;
+  --color-water-soft: rgba(125, 211, 252, 0.16);
 
   /* --- Culori: soare / atentie ----------------------------------------- */
-  --color-sun: #c8963f;
-  --color-sun-soft: #f6eeda;
-
-  /* --- Culori: pamant / accent cald ------------------------------------ */
-  --color-soil: #b5714c;
-  --color-soil-soft: #f5e8e0;
+  --color-sun: #fbbf24;
+  --color-sun-soft: rgba(251, 191, 36, 0.16);
 
   /* --- Culori: eroare -------------------------------------------------- */
-  --color-wilt: #a8544a;
-  --color-wilt-soft: #f6e5e3;
+  --color-wilt: #fb7185;
+  --color-wilt-soft: rgba(251, 113, 133, 0.16);
 
   /* --- Tipografie ------------------------------------------------------ */
   --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
@@ -56,18 +58,16 @@
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 22px;
-  --radius-xl: 28px;
+  --radius-xl: 26px;
   --radius-2xl: 36px;
 
-  /* --- Umbre (discrete, colorate cald - nu negru pur) ------------------ */
-  --shadow-soft: 0 1px 2px rgba(58, 50, 38, 0.04),
-    0 2px 8px rgba(58, 50, 38, 0.04);
-  --shadow-card: 0 1px 2px rgba(58, 50, 38, 0.05),
-    0 6px 20px rgba(58, 50, 38, 0.06);
-  --shadow-raised: 0 2px 4px rgba(58, 50, 38, 0.06),
-    0 12px 32px rgba(58, 50, 38, 0.09);
-  --shadow-float: 0 4px 10px rgba(58, 50, 38, 0.08),
-    0 18px 48px rgba(58, 50, 38, 0.12);
+  /* --- Umbre ----------------------------------------------------------- */
+  /* Pe fundal inchis umbrele nu mai separa prin intuneric, ci prin adancime:
+     sunt mai puternice si mai difuze decat ar fi pe alb. */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 14px 44px rgba(0, 0, 0, 0.45);
 
   /* --- Durate de animatie (sectiunea 9: 150-350ms) --------------------- */
   --duration-instant: 120ms;
@@ -86,7 +86,7 @@
    ========================================================================== */
 
 :root {
-  color-scheme: light; /* fara tema dark - CLAUDE.md sectiunea 5 */
+  color-scheme: dark;
 
   /* Inaltimea barii de navigatie, folosita pentru padding-ul paginilor. */
   --nav-height: 64px;
@@ -130,9 +130,10 @@ h3 {
   text-wrap: balance;
 }
 
-/* Focus vizibil si accesibil (sectiunea 82). */
+/* Focus vizibil si accesibil (sectiunea 82). Pe fundal inchis conturul verde
+   nu se vede destul, deci folosim alb. */
 :focus-visible {
-  outline: 2px solid var(--color-leaf);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -155,6 +156,13 @@ h3 {
   width: 100%;
   max-width: 30rem; /* 480px */
   margin-inline: auto;
+}
+
+/* Cardul de sticla, elementul de baza al interfetei. */
+@utility glass {
+  background-color: var(--color-surface);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-line);
 }
 
 /* Suprafata de atingere de minim 44px chiar daca elementul e vizual mai mic

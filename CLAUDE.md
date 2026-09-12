@@ -119,10 +119,31 @@ in Supabase Storage.
 
 ## 5. Tema
 
-**Doar light.** Nu se implementeaza tema dark.
+**Doar intunecata.** Nu exista tema luminoasa.
 
-Paleta: off-white cald, verzuri naturale retinute, culori inspirate din natura.
-Verdele nu se pune pe fiecare componenta (sectiunea 7).
+Verde profund ca fundal (`#13402a`), carduri de sticla translucide, verde viu (`#4ade80`)
+ca accent, text alb. Lumina din fundal vine din componenta `Backdrop`, nu dintr-o culoare
+plata - fara ea verdele arata mort.
+
+Tokenurile sunt in `src/app/globals.css`. Foloseste utilitarul `glass` pentru carduri.
+
+### Costul acestei alegeri
+
+Pe fundal inchis, orice text alb asezat peste o fotografie cere un val intunecat peste
+poza, altfel nu se citeste. Asta intra in tensiune cu sectiunea 7 din `first-context.md`,
+care cere fotografie mare si luminoasa de plante.
+
+Regula practica: **textul sta sub poza ori de cate ori se poate**, nu peste ea. Valul
+intunecat se foloseste doar cand compozitia chiar il cere, si atunci cat mai usor.
+
+### Machetare de recuperat
+
+Ecranul de gradina cu plante reale - card mare cu poza, etichete, inele de progres,
+camp de cautare - a fost prototipat si sters dupa decizie. Se recupereaza din commit-ul
+`76eb9d2`, fisierul `src/app/preview/dark/page.tsx`.
+
+Poza folosita acolo e pastrata la `public/demo/monstera.jpg` - generata cu 3D AI Studio,
+utila pentru machetari si stari demonstrative. Nu e folosita momentan de niciun ecran.
 
 ## 6. Reguli care raman neschimbate din first-context.md
 
@@ -146,11 +167,11 @@ stari de incarcare/goale/eroare pentru fiecare feature.
 | 2026-09-10 | Fara Supabase Edge Functions | Next.js are deja server; un singur target de deploy |
 | 2026-09-10 | Un singur mediu Supabase | Proiect personal, un utilizator |
 | 2026-09-10 | Allow-list pe email | Aplicatie privata; protejeaza si cota Gemini |
-| 2026-09-10 | Fara tema dark | Identitate vizuala construita pe off-white cald |
 | 2026-09-11 | Vercel face build si deploy din GitHub; Actions ruleaza doar verificarile si migratiile | Vercel compileaza Next.js nativ; build in Actions ar pierde preview-urile pe PR |
 | 2026-09-11 | Lista de acces in tabelul `public.allowed_emails`, nu in variabile de mediu | Verificarea in baza de date nu poate fi ocolita si se schimba fara redeploy |
 | 2026-09-11 | `next_watering_at` se calculeaza, nu se stocheaza | O singura sursa de adevar: `last_watered_at` + interval |
 | 2026-09-11 | Starea `thriving` amanata | V1 nu are semnalele care sa o justifice; nu inventam stari |
+| 2026-09-12 | Tema intunecata, dupa o referinta vizuala | Decizia proprietarului, inlocuieste alegerea initiala de tema luminoasa |
 | 2026-09-11 | Model implicit `gemini-3.5-flash` | Masurat: ~13s si constant. `3.8-flash` da 503 des; `flash-lite` e de 3x mai rapid dar e un model mai slab la recunoastere fina, iar identificarea speciei e chiar miezul functiei |
 
 ---
