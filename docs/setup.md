@@ -51,8 +51,17 @@ Aplicatia se construieste si fara nicio cheie, deci primul deploy merge din prim
    `classick-o/my-little-garden`.
 3. Framework Preset: **Next.js**, detectat automat. Nu schimba comenzile de build.
 4. **Nu adauga inca variabile de mediu.** Apasa **Deploy**.
-5. Noteaza domeniul rezultat, de forma `my-little-garden-xxxx.vercel.app`.
-   **Asta e valoarea de care are nevoie tot restul ghidului.**
+5. Noteaza domeniul rezultat.
+
+> **Starea actuala a proiectului:**
+> proiectul Vercel exista deja (`my-little-garden`), toate variabilele de mediu sunt
+> setate, iar domeniul atribuit este:
+>
+> ```
+> https://my-little-garden-seven.vercel.app
+> ```
+>
+> Mai lipseste doar legarea de GitHub, din **Connect Git Repository** in dashboard.
 
 ### Regiunea
 
@@ -86,11 +95,11 @@ pana in Statele Unite si inapoi.
 3. **Authorized JavaScript origins** — domeniul aplicatiei, de la pasul 2:
    ```
    http://localhost:3000
-   https://<domeniul-tau>.vercel.app
+   https://my-little-garden-seven.vercel.app
    ```
 4. **Authorized redirect URIs** — aici merge URL-ul Supabase, nu al aplicatiei:
    ```
-   https://<project-ref>.supabase.co/auth/v1/callback
+   https://bnzzfxqsjztfjxdfqifx.supabase.co/auth/v1/callback
    ```
 5. Copiaza **Client ID** si **Client secret**.
 
@@ -99,7 +108,7 @@ pana in Statele Unite si inapoi.
 1. In Supabase: **Authentication -> Sign In / Providers -> Google** -> activeaza.
 2. Lipeste Client ID si Client Secret. Salveaza.
 3. **Authentication -> URL Configuration**:
-   * **Site URL**: `https://<domeniul-tau>.vercel.app`
+   * **Site URL**: `https://my-little-garden-seven.vercel.app`
    * **Redirect URLs**: adauga si `http://localhost:3000/**`
 
 ---
@@ -158,7 +167,7 @@ Adauga tot ce e in `.env.local`, cu o singura diferenta:
 
 | Variabila | Valoare in Vercel |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://<domeniul-tau>.vercel.app`, nu `localhost` |
+| `NEXT_PUBLIC_SITE_URL` | `https://my-little-garden-seven.vercel.app`, nu `localhost` |
 
 Restul se copiaza identic. `DB_PASS` nu e folosit de aplicatie — parola bazei de date
 merge doar in GitHub Secrets, la pasul urmator.
