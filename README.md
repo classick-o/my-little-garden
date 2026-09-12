@@ -25,24 +25,27 @@ npm run dev
 
 ### Pe telefon
 
-Aplicatia e mobile-first, deci merita testata pe telefonul real:
+Aplicatia e mobile-first, deci merita testata pe telefonul real. `npm run dev` asculta deja
+pe toata reteaua, nu doar pe localhost.
+
+De pe telefonul conectat la acelasi Wi-Fi, deschide `http://<ip-ul-calculatorului>:3000`.
+
+**Atentie:** adresa afisata de Next la "Network" poate fi gresita. Daca ai VMware sau
+VirtualBox instalat, Next alege adaptorul lor virtual (`192.168.47.x`), care nu e vizibil
+de pe telefon. Iti trebuie adresa adaptorului **Wi-Fi**:
 
 ```bash
-npm run dev:lan
+ipconfig
 ```
 
-Apoi, de pe telefonul conectat la acelasi Wi-Fi, deschide `http://<ip-ul-calculatorului>:3000`.
-IP-ul il afli cu `ipconfig` (linia IPv4 de la adaptorul Wi-Fi).
-
-Daca nu se incarca, verifica firewall-ul Windows: la prima rulare cere permisiune pentru
-Node.js si trebuie acceptata pentru reteaua privata.
+Daca tot nu se incarca, firewall-ul Windows blocheaza portul: la prima rulare cere
+permisiune pentru Node.js si trebuie acceptata pentru reteaua privata.
 
 ## Comenzi
 
 | Comanda | Ce face |
 |---|---|
-| `npm run dev` | Server de dezvoltare |
-| `npm run dev:lan` | Server accesibil din reteaua locala, ca sa deschizi aplicatia pe telefon |
+| `npm run dev` | Server de dezvoltare (accesibil si din reteaua locala) |
 | `npm run build` | Build de productie |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Verificare de tipuri |
