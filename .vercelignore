@@ -1,0 +1,17 @@
+# Nimic cu secrete nu urca la build. Variabilele vin din Environment Variables,
+# setate in proiectul Vercel.
+.env
+.env.*
+!.env.example
+
+# Setari locale si artefacte de lucru
+.claude/
+.screenshots/
+.fixtures/
+supabase/
+scripts/
+
+# Documentatie
+docs/
+*.md
+!README.md

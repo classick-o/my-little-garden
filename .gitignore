@@ -40,8 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# pastreaza sablonul de variabile in repo
-!.env.example
 
 # scratch local
 /tmp/
@@ -54,3 +52,7 @@ next-env.d.ts
 
 # setari Claude Code personale, cu permisiuni - nu se comit
 .claude/settings.local.json
+
+# pastreaza sablonul de variabile in repo (trebuie sa ramana ultima
+# regula despre .env, altfel o anuleaza .env* de mai sus)
+!.env.example
