@@ -56,6 +56,7 @@ permisiune pentru Node.js si trebuie acceptata pentru reteaua privata.
 | `npm run smoke:ai` | Verificare cu o cerere reala catre Gemini (consuma cota) |
 | `npm run secrets` | Genereaza cheile VAPID si secretul de cron in `.env.local` |
 | `npm run check:env` | Verifica faptul ca `.env.example` nu contine valori reale |
+| `npm run verify:db` | Verifica schema, RLS si bucketul de poze in Supabase |
 
 Exemplu: `npm run shot -- discover journal`
 

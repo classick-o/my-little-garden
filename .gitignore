@@ -51,3 +51,6 @@ next-env.d.ts
 
 # poze descarcate pentru verificarile cu AI
 /.fixtures/
+
+# setari Claude Code personale, cu permisiuni - nu se comit
+.claude/settings.local.json
