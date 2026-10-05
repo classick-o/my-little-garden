@@ -142,12 +142,42 @@ nu la fiecare adaugare. Asa avem si coerenta, si magia.
 Progresia citeste `plant_events`, care inregistreaza deja fiecare udare, poza si mutare.
 Modelul de evenimente ales la schema initiala acopera tot ce ii trebuie scenei 3D.
 
+### Lumea, nu doar plantele
+
+A doua iteratie a adaugat decorul cerut de proprietar: insula plutitoare pe cer, nori,
+cascade, copaci, arcada inflorita, si parcele in care stau plantele.
+
+**Ce s-a pastrat din referinta si ce nu.** Imaginea de referinta era un joc de ferma, cu
+monede, cristale, timere, magazin si misiuni. Am luat lumea si interactiunile; am lasat
+economia. Motivul e acelasi ca la prima iteratie: sectiunile 42 si 80 interzic ca
+aplicatia sa para un joc, iar o gradina cu valuta proprie ar fi exact asta.
+
+**Parcelele rezolva o problema reala.** Cu plante asezate oriunde, gradina devine
+dezordonata dupa cateva mutari. Cu parcele, fiecare planta are un loc, iar mutarea intre
+doua parcele ocupate le schimba intre ele - nu exista mutare invalida.
+
+### Capcane intalnite, toate tacute
+
+Niciuna nu a dat eroare; toate doar aratau prost:
+
+* **Lipirea geometriilor fara index** amesteca triunghiurile. Iarba a iesit ca niste fire
+  lungi aruncate peste insula, iar muntii ca niste cioburi in cer. Se foloseste
+  `mergeGeometries` din `BufferGeometryUtils`, nu o functie proprie care copiaza doar
+  pozitiile si normalele.
+* **`useTexture` cu o lista** nu garanteaza ordinea in care intorc texturile. Pamantul a
+  ajuns pe iarba fara nicio eroare. Se incarca fiecare textura cu apelul ei.
+* **Cilindri suprapusi**: un strat fara deplasare pe verticala strapungea discul de iarba.
+  Cotele fiecarui strat se scriu explicit, cu comentariu.
+* **Sub insula nu ajunge lumina.** In loc de inca o sursa doar pentru stanca, materialul
+  primeste emisie proprie - obisnuit in stilul asta si mult mai ieftin.
+
 ### Prototipul
 
 Live la `/preview/garden3d`, impreuna cu:
 
-* `src/components/garden3d/` - scena, planta, shaderul de vant
-* `public/garden3d/*.glb` - cele patru modele, deja optimizate
+* `src/components/garden3d/` - scena, lumea, insula, planta, cascadele, shaderul de vant
+* `public/garden3d/*.glb` - zece modele, deja optimizate
+* `public/garden3d/textures/` - iarba, pamant si nor
 
 E cod de test, nu de productie: datele sunt scrise de mana, iar panoul cu reglaje de vant
 si crestere exista doar ca sa se vada efectul. Se sterge dupa ce decidem - exact ca

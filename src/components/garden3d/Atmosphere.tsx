@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { seededRandom } from "./random";
+import { HAZE_COLOR } from "./World";
 
 /**
  * Luminile si aerul gradinii.
@@ -14,40 +15,45 @@ import { seededRandom } from "./random";
  * desprinde plantele de fundal. Cu o singura lumina, scena arata plat si ieftin.
  */
 
-/** Culoarea cetii si a fundalului - acelasi verde ca restul aplicatiei. */
-export const AIR_COLOR = "#13402a";
+/** Culoarea cetii: aceeasi cu orizontul, altfel departarile taie brusc. */
+export const AIR_COLOR = HAZE_COLOR;
 
 export function Atmosphere() {
   return (
     <>
-      {/* Ceata departeaza marginile si da adancime. */}
-      <fogExp2 attach="fog" args={[AIR_COLOR, 0.042]} />
+      {/* Ceata departeaza muntii si topeste norii in zare. Densitate mica:
+          lumea e acum mult mai mare decat insula. */}
+      <fogExp2 attach="fog" args={[AIR_COLOR, 0.016]} />
 
       {/* Lumina ambientala a cerului: cald sus, verde reflectat de jos. */}
-      <hemisphereLight args={["#f6fdf3", "#3a6b47", 1.45]} />
+      <hemisphereLight args={["#eaf6ff", "#6f9a63", 1.5]} />
 
       {/* Soarele. Singura lumina care face umbre. */}
       <directionalLight
-        position={[4.2, 6.5, 3]}
-        intensity={3.1}
-        color="#fff3dc"
+        position={[5, 7.5, 4]}
+        intensity={2.9}
+        color="#fff4de"
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-4}
-        shadow-camera-right={4}
-        shadow-camera-top={4}
-        shadow-camera-bottom={-4}
+        shadow-camera-left={-5}
+        shadow-camera-right={5}
+        shadow-camera-top={5}
+        shadow-camera-bottom={-5}
         shadow-camera-near={0.5}
         shadow-camera-far={20}
         shadow-bias={-0.0007}
         shadow-normalBias={0.02}
       />
 
-      {/* Umplutura rece din partea opusa: umbrele capata culoare. */}
-      <directionalLight position={[-4, 2.4, -3]} intensity={0.55} color="#9fd8ff" />
+      {/* Umplutura rece din partea opusa: umbrele capata culoare, nu raman gri. */}
+      <directionalLight position={[-5, 3, -3]} intensity={0.7} color="#bfe4ff" />
 
-      {/* Contur verde-viu din spate, care desprinde plantele de fundal. */}
-      <directionalLight position={[-1.5, 1.2, -5]} intensity={0.9} color="#8ef2a8" />
+      {/* Lumina reflectata de nori, de jos in sus: fara ea stanca de sub
+          insula ramane complet neagra. */}
+      <directionalLight position={[1, -7, 4]} intensity={1.5} color="#e8f4ff" />
+
+      {/* Contur cald dinspre soare, care desprinde siluetele de cer. */}
+      <directionalLight position={[-6, 4, -9]} intensity={1.1} color="#ffe6b0" />
 
       <Pollen />
     </>
@@ -114,9 +120,9 @@ function Pollen() {
     <points ref={points} geometry={geometry}>
       <pointsMaterial
         size={0.028}
-        color="#f6ffd9"
+        color="#ffffff"
         transparent
-        opacity={0.4}
+        opacity={0.5}
         sizeAttenuation
         depthWrite={false}
       />
