@@ -1,4 +1,3 @@
-import { Backdrop } from "@/components/app-shell/Backdrop";
 import { GardenScene } from "@/components/garden3d/GardenScene";
 
 /**
@@ -10,10 +9,7 @@ import { GardenScene } from "@/components/garden3d/GardenScene";
 export const metadata = { title: "Test - gradina 3D" };
 
 export default function Garden3DPage() {
-  return (
-    <>
-      <Backdrop />
-      <GardenScene />
-    </>
-  );
+  /* Scena are fundal propriu si ocupa tot ecranul, deci Backdrop-ul
+     aplicatiei nu s-ar vedea oricum. */
+  return <GardenScene />;
 }

@@ -1,37 +1,38 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 import { applyWind } from "./wind";
+import { stageTarget } from "./stage";
 
 /**
- * O planta in gradina 3D.
+ * O planta in gradina.
  *
- * Modelul vine normalizat: indiferent ce dimensiuni are fisierul, il scalam la
- * inaltimea ceruta si il asezam cu baza exact pe sol. Modelele generate ies la
- * scari arbitrare, deci asta nu e optional.
- *
- * Impartirea muncii nu e intamplatoare: in `useMemo` stau doar calcule pure,
- * iar modificarile asupra obiectelor Three.js stau in `useEffect`. Altfel
- * React Compiler se plange, pe buna dreptate - obiectele Three sunt mutabile
- * si traiesc in afara modelului React.
+ * Pozitia nu e pusa direct pe grup, ci urmarita lin la fiecare cadru. Asa
+ * aceeasi logica acopera si tragerea cu degetul, si urcarea in prim-plan cand
+ * e deschis cardul - fara doua sisteme de animatie separate.
  */
+
+/** Inaltimea la care apare orice planta cand e in prim-plan. */
+const SHOWCASE_HEIGHT = 0.88;
 
 export type PlantProps = {
   url: string;
   position: [number, number, number];
-  /** Inaltimea dorita in scena, in unitati de lume. */
+  /** Inaltimea dorita in gradina, in unitati de lume. */
   height: number;
   rotation?: number;
   /** Cat de tare o misca vantul. Plantele rigide primesc valori mici. */
   windStrength?: number;
   /** 0 = abia plantata, 1 = crescuta complet. In aplicatie vine din date reale. */
   growth?: number;
-  selected?: boolean;
-  onSelect?: () => void;
+  /** In prim-plan, cu cardul deschis. */
+  showcase?: boolean;
+  dragging?: boolean;
+  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
 };
 
 export function Plant({
@@ -41,12 +42,14 @@ export function Plant({
   rotation = 0,
   windStrength = 1,
   growth = 1,
-  selected = false,
-  onSelect,
+  showcase = false,
+  dragging = false,
+  onPointerDown,
 }: PlantProps) {
   const { scene } = useGLTF(url);
 
-  const liftRef = useRef<THREE.Group>(null);
+  const root = useRef<THREE.Group>(null);
+  const spin = useRef<THREE.Group>(null);
 
   /* Fiecare planta are nevoie de propria copie: altfel ar imparti materialele
      cu celelalte si vantul le-ar misca pe toate la fel. */
@@ -93,32 +96,49 @@ export function Plant({
     });
   }, [model, windStrength]);
 
-  useFrame((state) => {
-    const time = state.clock.elapsedTime;
+  useFrame((state, delta) => {
+    const group = root.current;
+    if (!group) return;
 
-    /* Planta selectata se ridica usor si pluteste - semnalul ca e aleasa,
-       fara sa adaugam un contur strident. */
-    const lift = liftRef.current;
-    if (lift) {
-      const target = selected ? 0.09 + Math.sin(time * 2) * 0.015 : 0;
-      lift.position.y += (target - lift.position.y) * 0.12;
+    /* Factor independent de rata de cadre: pe un telefon lent animatia merge
+       la fel de repede ca pe desktop. */
+    const ease = 1 - Math.pow(0.0001, delta);
+
+    if (showcase) {
+      group.position.lerp(stageTarget, ease);
+
+      const target = SHOWCASE_HEIGHT / height;
+      group.scale.lerp(new THREE.Vector3(target, target, target), ease);
+
+      /* Se roteste incet, ca un obiect pe care il intorci in mana. */
+      if (spin.current) spin.current.rotation.y += delta * 0.35;
+    } else {
+      /* Cand e trasa cu degetul, urmareste mai aproape de instantaneu. */
+      const follow = dragging ? 1 - Math.pow(0.000000001, delta) : ease;
+      group.position.lerp(
+        new THREE.Vector3(position[0], position[1], position[2]),
+        follow,
+      );
+
+      group.scale.lerp(new THREE.Vector3(growth, growth, growth), ease);
+
+      if (spin.current) {
+        /* Se intoarce lin la orientarea ei din gradina. */
+        spin.current.rotation.y += (rotation - spin.current.rotation.y) * ease;
+      }
+
+      /* Cat e trasa, se ridica putin de la sol - se vede ca e "in mana".
+         Numai in gradina: in prim-plan ar trage-o inapoi spre pamant. */
+      const lift = dragging ? 0.12 : 0;
+      group.position.y += (position[1] + lift - group.position.y) * ease * 0.6;
     }
   });
 
   return (
-    <group
-      position={position}
-      rotation={[0, rotation, 0]}
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect?.();
-      }}
-    >
-      <group ref={liftRef}>
-        <group scale={growth}>
-          <group scale={scale} position-y={offsetY}>
-            <primitive object={model} />
-          </group>
+    <group ref={root} position={position} onPointerDown={onPointerDown}>
+      <group ref={spin} rotation-y={rotation}>
+        <group scale={scale} position-y={offsetY}>
+          <primitive object={model} />
         </group>
       </group>
     </group>
