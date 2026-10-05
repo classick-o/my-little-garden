@@ -171,6 +171,24 @@ Niciuna nu a dat eroare; toate doar aratau prost:
 * **Sub insula nu ajunge lumina.** In loc de inca o sursa doar pentru stanca, materialul
   primeste emisie proprie - obisnuit in stilul asta si mult mai ieftin.
 
+### A treia iteratie: insula patrata
+
+Insula a devenit patrata si mult mai mare (6,6 unitati), cu noua parcele in grila de 3x3,
+casa, gard, pasari si petale purtate de vant. Sub ea atarna o piramida de pamant cu
+varfurile deplasate.
+
+**Camera e fixa.** Se poate doar apropia si departa. Rotirea libera scotea gradina din
+cadru si nu aducea nimic - unghiul ales e singurul din care se vede toata insula.
+
+**Postprocesarea a fost scoasa complet.** `EffectComposer` dadea ecran negru pe telefon.
+Reprodus local: fara el, scena se randeaza normal; cu el, tot ecranul e negru. Era oricum
+partea cea mai scumpa, iar vinieta arata la fel ca strat CSS peste panza, cu zero cost.
+Daca se vrea bloom mai tarziu, trebuie reintrodus cu atentie si testat pe telefon real.
+
+**Cum se testeaza interactiunile.** Camera fiind fixa si determinista, pozitia pe ecran a
+oricarui punct din lume se poate calcula in afara browserului, cu aceeasi matematica de
+incadrare. Mult mai sigur decat ghicitul coordonatelor sau scanarea unei grile.
+
 ### Prototipul
 
 Live la `/preview/garden3d`, impreuna cu:

@@ -12,21 +12,24 @@ export type Plot = {
 };
 
 /** Distanta dintre parcele. Destul cat plantele mari sa nu se atinga. */
-const SPACING = 1.02;
+const SPACING = 1.28;
 
-/* Doua randuri de cate trei, usor spre fata insulei. In spate raman copacii
-   si arcada. */
+/* Trei randuri de cate trei, spre fata insulei. In spate raman casa, arcada
+   si copacii. */
 export const PLOTS: Plot[] = [
-  { x: -SPACING, z: -0.42 },
-  { x: 0, z: -0.42 },
-  { x: SPACING, z: -0.42 },
-  { x: -SPACING, z: 0.72 },
-  { x: 0, z: 0.72 },
-  { x: SPACING, z: 0.72 },
+  { x: -SPACING, z: -0.35 },
+  { x: 0, z: -0.35 },
+  { x: SPACING, z: -0.35 },
+  { x: -SPACING, z: 0.93 },
+  { x: 0, z: 0.93 },
+  { x: SPACING, z: 0.93 },
+  { x: -SPACING, z: 2.21 },
+  { x: 0, z: 2.21 },
+  { x: SPACING, z: 2.21 },
 ];
 
 /** Latura unei parcele. */
-export const PLOT_SIZE = 0.82;
+export const PLOT_SIZE = 1.02;
 
 /** Indexul parcelei celei mai apropiate de un punct de pe sol. */
 export function nearestPlot(x: number, z: number): number {

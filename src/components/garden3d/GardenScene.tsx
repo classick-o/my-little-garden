@@ -3,12 +3,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 import { AIR_COLOR, Atmosphere } from "./Atmosphere";
+import { DistantBirds, PerchedBird } from "./Birds";
 import { Decor } from "./Decor";
-import { Island, ISLAND_RADIUS } from "./Island";
+import { Island, ISLAND_HALF } from "./Island";
+import { Petals } from "./Petals";
 import { Plant } from "./Plant";
 import { nearestPlot, place, PLOTS } from "./plots";
 import { STAGE_DISTANCE, updateStageTarget } from "./stage";
@@ -18,8 +19,15 @@ import { World } from "./World";
 /**
  * Gradina 3D - test vizual.
  *
- * O insula plutitoare pe cer. Plantele stau in parcele si se pot muta dintr-una
- * in alta. O atingere scurta aduce planta in prim-plan.
+ * O insula patrata care pluteste pe cer. Plantele stau in parcele si se pot
+ * muta dintr-una in alta. O atingere scurta aduce planta in prim-plan.
+ *
+ * Camera e fixa: se poate doar apropia si departa. Rotirea libera scotea
+ * gradina din cadru.
+ *
+ * Scena nu foloseste postprocesare. Lantul de randare in texturi al
+ * EffectComposer dadea ecran negru - reprodus local, nu presupus - si era
+ * oricum partea cea mai scumpa pe telefon. Vinieta e acum un strat CSS.
  */
 
 type GardenPlant = {
@@ -45,7 +53,7 @@ const INITIAL_PLANTS: GardenPlant[] = [
     species: "Monstera deliciosa",
     url: "/garden3d/monstera.glb",
     plot: 0,
-    height: 1.25,
+    height: 1.3,
     rotation: 0.3,
     wind: 1,
     wateredDaysAgo: 3,
@@ -57,7 +65,7 @@ const INITIAL_PLANTS: GardenPlant[] = [
     species: "Sansevieria trifasciata",
     url: "/garden3d/sansevieria.glb",
     plot: 2,
-    height: 1.1,
+    height: 1.15,
     rotation: -0.45,
     wind: 0.3,
     wateredDaysAgo: 11,
@@ -68,8 +76,8 @@ const INITIAL_PLANTS: GardenPlant[] = [
     name: "Pufi",
     species: "Echeveria elegans",
     url: "/garden3d/echeveria.glb",
-    plot: 3,
-    height: 0.5,
+    plot: 4,
+    height: 0.52,
     rotation: 0.9,
     wind: 0.12,
     wateredDaysAgo: 6,
@@ -80,8 +88,8 @@ const INITIAL_PLANTS: GardenPlant[] = [
     name: "Iedera",
     species: "Epipremnum aureum",
     url: "/garden3d/pothos.glb",
-    plot: 5,
-    height: 0.85,
+    plot: 7,
+    height: 0.88,
     rotation: -1,
     wind: 0.85,
     wateredDaysAgo: 1,
@@ -89,48 +97,55 @@ const INITIAL_PLANTS: GardenPlant[] = [
   },
 ];
 
-/** Decorul fix: copaci, arcada si marunte. Nu se pot muta. */
+/** Decorul fix. Nu se poate muta si nu se poate selecta. */
 const DECOR = [
-  { url: "/garden3d/tree.glb", position: [-1.5, 0, -1.75], height: 1.95, rotation: 0.4, wind: 0.45 },
-  { url: "/garden3d/pine.glb", position: [1.72, 0, -1.68], height: 1.75, rotation: -0.3, wind: 0.2 },
-  { url: "/garden3d/pine.glb", position: [2.15, 0, 1.3], height: 1.25, rotation: 1.1, wind: 0.2 },
-  { url: "/garden3d/arch.glb", position: [0.1, 0, -1.62], height: 1.5, rotation: 0.02, wind: 0.1 },
-  { url: "/garden3d/watering-can.glb", position: [-2.05, 0, 0.5], height: 0.34, rotation: -0.6, wind: 0 },
-  { url: "/garden3d/stones.glb", position: [1.62, 0, 0.3], height: 0.16, rotation: 0.4, wind: 0 },
-  { url: "/garden3d/mushrooms.glb", position: [-1.5, 0, 1.6], height: 0.19, rotation: 2.2, wind: 0.25 },
-  { url: "/garden3d/stones.glb", position: [-0.2, 0, 1.95], height: 0.11, rotation: 2.9, wind: 0 },
+  { url: "/garden3d/house.glb", position: [-1.95, 0, -2.25], height: 1.55, rotation: 0.35, wind: 0 },
+  { url: "/garden3d/arch.glb", position: [0.55, 0, -2.5], height: 1.55, rotation: 0.02, wind: 0.1 },
+  { url: "/garden3d/tree.glb", position: [2.25, 0, -2.15], height: 2.1, rotation: 0.4, wind: 0.45 },
+  { url: "/garden3d/pine.glb", position: [-2.95, 0, -0.4], height: 1.8, rotation: -0.3, wind: 0.2 },
+  { url: "/garden3d/pine.glb", position: [2.9, 0, 1.5], height: 1.4, rotation: 1.1, wind: 0.2 },
+  { url: "/garden3d/watering-can.glb", position: [-2.5, 0, 1.35], height: 0.36, rotation: -0.6, wind: 0 },
+  { url: "/garden3d/stones.glb", position: [2.35, 0, -0.5], height: 0.17, rotation: 0.4, wind: 0 },
+  { url: "/garden3d/mushrooms.glb", position: [-2.4, 0, 2.5], height: 0.2, rotation: 2.2, wind: 0.25 },
+  { url: "/garden3d/stones.glb", position: [1.9, 0, 2.7], height: 0.12, rotation: 2.9, wind: 0 },
 ] as const;
+
+/** Gardul de pe marginea din fata, pus din segmente egale. */
+const FENCE_HEIGHT = 0.46;
+const FENCE_STEP = 0.92;
+const FENCE_POSTS = Array.from({ length: 7 }, (_, index) => ({
+  x: (index - 3) * FENCE_STEP,
+  z: ISLAND_HALF - 0.28,
+}));
 
 for (const plant of INITIAL_PLANTS) useGLTF.preload(plant.url);
 for (const item of DECOR) useGLTF.preload(item.url);
+useGLTF.preload("/garden3d/fence.glb");
+useGLTF.preload("/garden3d/bird.glb");
 
 /** Raza zonei care trebuie sa incapa in cadru la pornire. */
-const CONTENT_RADIUS = 3.15;
+const CONTENT_RADIUS = 4.2;
 const CAMERA_FOV = 42;
 
-/* Directia din care privim gradina. Ramane aceeasi pe orice ecran - se schimba
-   doar cat de departe sta camera. */
-const CAMERA_DIRECTION = { x: 1, y: 0.78, z: 1 };
+/* Unghiul din care se vede gradina. Nu se schimba niciodata. */
+const CAMERA_DIRECTION = { x: 0.62, y: 0.72, z: 1 };
 
 /** Cat trebuie sa se miste degetul ca sa fie tragere, nu atingere. */
-const DRAG_THRESHOLD = 0.08;
+const DRAG_THRESHOLD = 0.1;
 
-function framingDistance(width: number, height: number): number {
+function framingPosition(width: number, height: number): [number, number, number] {
   const aspect = width / Math.max(height, 1);
   const verticalFov = (CAMERA_FOV * Math.PI) / 180;
   const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * aspect);
 
   /* Ne incadram dupa axa mai stramta: pe telefon e cea orizontala. */
   const narrowest = Math.min(verticalFov, horizontalFov);
-  return (CONTENT_RADIUS / Math.tan(narrowest / 2)) * 1.02;
-}
+  const distance = (CONTENT_RADIUS / Math.tan(narrowest / 2)) * 1.02;
 
-function framingPosition(width: number, height: number): [number, number, number] {
-  const distance = framingDistance(width, height);
   const { x, y, z } = CAMERA_DIRECTION;
   const length = Math.sqrt(x * x + y * y + z * z);
 
-  return [(x / length) * distance, (y / length) * distance + 0.3, (z / length) * distance];
+  return [(x / length) * distance, (y / length) * distance + 0.4, (z / length) * distance];
 }
 
 export function GardenScene() {
@@ -141,7 +156,7 @@ export function GardenScene() {
   /* Unde se afla planta trasa acum, inainte sa fie asezata intr-o parcela. */
   const [dragPoint, setDragPoint] = useState<[number, number] | null>(null);
   const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([
-    6.4, 5.3, 6.4,
+    7, 8, 11,
   ]);
 
   const drag = useRef<{
@@ -217,12 +232,9 @@ export function GardenScene() {
     if (!info) return;
 
     /* Nu lasam planta sa iasa de pe insula. */
-    const limit = ISLAND_RADIUS - 0.5;
-    const distance = Math.hypot(point.x, point.z);
-    const factor = distance > limit ? limit / distance : 1;
-
-    const x = point.x * factor;
-    const z = point.z * factor;
+    const limit = ISLAND_HALF - 0.6;
+    const x = Math.min(Math.max(point.x, -limit), limit);
+    const z = Math.min(Math.max(point.z, -limit), limit);
 
     /* Comparam cu locul de plecare, nu cu cadrul anterior: altfel orice
        tremurat de deget ar trece drept tragere si nu s-ar mai deschide cardul. */
@@ -236,9 +248,11 @@ export function GardenScene() {
   return (
     <div className="relative h-dvh w-full touch-none select-none">
       <Canvas
-        dpr={[1, 2]}
+        /* Plafon mai jos decat ecranele moderne: pe telefon, 3x pixeli plus
+           umbre plus postprocesare duce la pierderea contextului grafic. */
+        dpr={[1, 1.6]}
         shadows
-        gl={{ antialias: true }}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
         onPointerMissed={() => setSelectedId(null)}
       >
         <PerspectiveCamera makeDefault fov={CAMERA_FOV} position={cameraPosition} />
@@ -246,6 +260,8 @@ export function GardenScene() {
         <SceneClock />
         <World />
         <Atmosphere />
+        <DistantBirds />
+        <Petals />
 
         <Suspense fallback={null}>
           <Island highlightedPlot={targetPlot} onPointerMove={moveDragged} />
@@ -283,38 +299,46 @@ export function GardenScene() {
               windStrength={item.wind}
             />
           ))}
+
+          {FENCE_POSTS.map((post, index) => (
+            <Decor
+              key={`fence-${index}`}
+              url="/garden3d/fence.glb"
+              position={[post.x, 0, post.z]}
+              height={FENCE_HEIGHT}
+            />
+          ))}
+
+          {/* Pasari cocotate: una pe gard, una langa casa. */}
+          <PerchedBird position={[FENCE_STEP * -1, FENCE_HEIGHT, ISLAND_HALF - 0.28]} rotation={2.6} height={0.26} />
+          <PerchedBird position={[-1.1, 0, -1.6]} rotation={-0.7} height={0.22} offset={3.4} />
         </Suspense>
 
         <Dimmer active={Boolean(selectedId)} />
 
         <OrbitControls
           enablePan={false}
-          enableDamping
-          dampingFactor={0.08}
-          /* Blocata cat timp tragi o planta sau e un card deschis. */
-          enabled={!draggingId && !selectedId}
+          /* Cadrul ramane acelasi; se poate doar apropia si departa. */
+          enableRotate={false}
           enableZoom
-          zoomSpeed={0.7}
-          minDistance={3.2}
-          maxDistance={18}
-          /* Camera nu coboara sub orizont si nu urca in varful capului:
-             gradina ramane vazuta din aceeasi parte. */
-          minPolarAngle={0.45}
-          maxPolarAngle={1.36}
+          enableDamping
+          dampingFactor={0.1}
+          zoomSpeed={0.6}
+          enabled={!draggingId && !selectedId}
+          minDistance={5}
+          maxDistance={20}
           target={[0, 0.3, 0]}
         />
 
-        <EffectComposer>
-          {/* Doar varfurile luminoase stralucesc: soarele, polenul, apa. */}
-          <Bloom
-            intensity={0.55}
-            luminanceThreshold={0.75}
-            luminanceSmoothing={0.35}
-            mipmapBlur
-          />
-          <Vignette offset={0.34} darkness={0.4} />
-        </EffectComposer>
       </Canvas>
+
+      {/* Vinieta, ca strat CSS peste panza.
+          Varianta din postprocesare arata la fel, dar cerea un lant intreg de
+          randare in texturi - pe telefon ducea la ecran negru. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_85%_at_50%_45%,transparent_45%,rgba(14,40,24,0.38)_100%)]"
+      />
 
       <Overlay
         selected={selected}
@@ -358,7 +382,7 @@ function Dimmer({ active }: { active: boolean }) {
     if (!plane || !paint) return;
 
     const ease = 1 - Math.pow(0.004, delta);
-    paint.opacity += ((active ? 0.86 : 0) - paint.opacity) * ease;
+    paint.opacity += ((active ? 0.88 : 0) - paint.opacity) * ease;
     plane.visible = paint.opacity > 0.01;
 
     if (!plane.visible) return;
@@ -374,7 +398,7 @@ function Dimmer({ active }: { active: boolean }) {
 
   return (
     <mesh ref={mesh} visible={false} renderOrder={1}>
-      <planeGeometry args={[40, 40]} />
+      <planeGeometry args={[60, 60]} />
       <meshBasicMaterial
         ref={material}
         color={AIR_COLOR}

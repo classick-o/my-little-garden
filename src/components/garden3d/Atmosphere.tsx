@@ -34,11 +34,11 @@ export function Atmosphere() {
         intensity={2.9}
         color="#fff4de"
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-5}
-        shadow-camera-right={5}
-        shadow-camera-top={5}
-        shadow-camera-bottom={-5}
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-6}
+        shadow-camera-right={6}
+        shadow-camera-top={6}
+        shadow-camera-bottom={-6}
         shadow-camera-near={0.5}
         shadow-camera-far={20}
         shadow-bias={-0.0007}
