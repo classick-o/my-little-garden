@@ -189,6 +189,28 @@ Daca se vrea bloom mai tarziu, trebuie reintrodus cu atentie si testat pe telefo
 oricarui punct din lume se poate calcula in afara browserului, cu aceeasi matematica de
 incadrare. Mult mai sigur decat ghicitul coordonatelor sau scanarea unei grile.
 
+### A patra iteratie: scena vie
+
+Flori colorate (trandafiri, lalele, floarea-soarelui), iaz cu apa desenata in shader,
+fluturi, si **insulite plutitoare** in jurul gradinii.
+
+**Culoarea a fost problema reala.** Scena era aproape numai verde, iar verdele singur
+arata trist oricat de bine ar fi luminat. Trei modele de flori au schimbat-o complet.
+
+**Insulitele sunt asezate de mana, nu la intamplare.** Camera fiind fixa, stim exact ce
+intra in cadru. Imprastiate aleator pe un inel, jumatate ajungeau in afara ecranului si
+restul acopereau gradina.
+
+### Inca o cauza de ecran negru
+
+`maxDistance` al controalelor era o valoare fixa. Distanta de incadrare se calculeaza
+insa din latimea ecranului: pe un ecran mai ingust creste, si poate depasi limita fixa -
+caz in care camera ajunge in afara intervalului permis si scena se stinge.
+
+Reprodus local prin marirea cadrului cu cativa la suta. Limitele de zoom se calculeaza
+acum din distanta reala (`distance * 0.45` si `distance * 1.5`), deci raman valide pe
+orice ecran. Probabil aceeasi cauza ca ecranele negre raportate initial.
+
 ### Prototipul
 
 Live la `/preview/garden3d`, impreuna cu:

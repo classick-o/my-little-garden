@@ -7,9 +7,12 @@ import * as THREE from "three";
 
 import { AIR_COLOR, Atmosphere } from "./Atmosphere";
 import { DistantBirds, PerchedBird } from "./Birds";
+import { Butterflies } from "./Butterflies";
 import { Decor } from "./Decor";
 import { Island, ISLAND_HALF } from "./Island";
+import { Islets } from "./Islets";
 import { Petals } from "./Petals";
+import { Pond } from "./Pond";
 import { Plant } from "./Plant";
 import { nearestPlot, place, PLOTS } from "./plots";
 import { STAGE_DISTANCE, updateStageTarget } from "./stage";
@@ -107,7 +110,19 @@ const DECOR = [
   { url: "/garden3d/watering-can.glb", position: [-2.5, 0, 1.35], height: 0.36, rotation: -0.6, wind: 0 },
   { url: "/garden3d/stones.glb", position: [2.35, 0, -0.5], height: 0.17, rotation: 0.4, wind: 0 },
   { url: "/garden3d/mushrooms.glb", position: [-2.4, 0, 2.5], height: 0.2, rotation: 2.2, wind: 0.25 },
-  { url: "/garden3d/stones.glb", position: [1.9, 0, 2.7], height: 0.12, rotation: 2.9, wind: 0 },
+  { url: "/garden3d/stones.glb", position: [1.44, 0, 2.08], height: 0.13, rotation: 2.9, wind: 0 },
+  { url: "/garden3d/stones.glb", position: [2.98, 0, 2.52], height: 0.15, rotation: 1.2, wind: 0 },
+
+  /* Florile sunt aici pentru culoare. Scena era aproape numai verde, iar
+     verdele singur arata trist oricat de bine ar fi luminat. */
+  { url: "/garden3d/roses.glb", position: [-3.0, 0, -1.35], height: 0.42, rotation: 0.6, wind: 0.3 },
+  { url: "/garden3d/roses.glb", position: [-2.85, 0, 0.55], height: 0.36, rotation: 2.1, wind: 0.3 },
+  { url: "/garden3d/roses.glb", position: [1.05, 0, -3.0], height: 0.4, rotation: 1.4, wind: 0.3 },
+  { url: "/garden3d/tulips.glb", position: [2.75, 0, 0.35], height: 0.46, rotation: -0.4, wind: 0.5 },
+  { url: "/garden3d/tulips.glb", position: [1.35, 0, 2.86], height: 0.4, rotation: 1.9, wind: 0.5 },
+  { url: "/garden3d/tulips.glb", position: [-1.9, 0, 2.95], height: 0.38, rotation: 0.2, wind: 0.5 },
+  { url: "/garden3d/sunflowers.glb", position: [-3.05, 0, 1.95], height: 0.8, rotation: 0.3, wind: 0.6 },
+  { url: "/garden3d/sunflowers.glb", position: [3.0, 0, -1.55], height: 0.72, rotation: -0.9, wind: 0.6 },
 ] as const;
 
 /** Gardul de pe marginea din fata, pus din segmente egale. */
@@ -124,7 +139,7 @@ useGLTF.preload("/garden3d/fence.glb");
 useGLTF.preload("/garden3d/bird.glb");
 
 /** Raza zonei care trebuie sa incapa in cadru la pornire. */
-const CONTENT_RADIUS = 4.2;
+const CONTENT_RADIUS = 4.55;
 const CAMERA_FOV = 42;
 
 /* Unghiul din care se vede gradina. Nu se schimba niciodata. */
@@ -133,15 +148,18 @@ const CAMERA_DIRECTION = { x: 0.62, y: 0.72, z: 1 };
 /** Cat trebuie sa se miste degetul ca sa fie tragere, nu atingere. */
 const DRAG_THRESHOLD = 0.1;
 
-function framingPosition(width: number, height: number): [number, number, number] {
+/** Distanta de la care gradina incape intreaga in cadru. */
+function framingDistance(width: number, height: number): number {
   const aspect = width / Math.max(height, 1);
   const verticalFov = (CAMERA_FOV * Math.PI) / 180;
   const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * aspect);
 
   /* Ne incadram dupa axa mai stramta: pe telefon e cea orizontala. */
   const narrowest = Math.min(verticalFov, horizontalFov);
-  const distance = (CONTENT_RADIUS / Math.tan(narrowest / 2)) * 1.02;
+  return (CONTENT_RADIUS / Math.tan(narrowest / 2)) * 1.02;
+}
 
+function framingPosition(distance: number): [number, number, number] {
   const { x, y, z } = CAMERA_DIRECTION;
   const length = Math.sqrt(x * x + y * y + z * z);
 
@@ -155,9 +173,12 @@ export function GardenScene() {
 
   /* Unde se afla planta trasa acum, inainte sa fie asezata intr-o parcela. */
   const [dragPoint, setDragPoint] = useState<[number, number] | null>(null);
-  const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([
-    7, 8, 11,
-  ]);
+  /* Distanta de pornire si pozitia camerei merg impreuna: limitele de zoom se
+     calculeaza din ea, nu din numere fixe. Pe un ecran ingust distanta creste,
+     iar o limita fixa ar fi lasat camera in afara intervalului permis - caz in
+     care controalele o mutau brusc si scena se stingea. */
+  const [distance, setDistance] = useState(21);
+  const cameraPosition = useMemo(() => framingPosition(distance), [distance]);
 
   const drag = useRef<{
     id: string;
@@ -176,7 +197,7 @@ export function GardenScene() {
 
   useEffect(() => {
     const fit = () =>
-      setCameraPosition(framingPosition(window.innerWidth, window.innerHeight));
+      setDistance(framingDistance(window.innerWidth, window.innerHeight));
 
     fit();
     window.addEventListener("resize", fit);
@@ -262,9 +283,12 @@ export function GardenScene() {
         <Atmosphere />
         <DistantBirds />
         <Petals />
+        <Butterflies />
 
         <Suspense fallback={null}>
+          <Islets />
           <Island highlightedPlot={targetPlot} onPointerMove={moveDragged} />
+          <Pond position={[2.28, 0, 2.42]} radius={0.72} />
 
           {plants.map((plant) => {
             const dragging = draggingId === plant.id;
@@ -325,8 +349,8 @@ export function GardenScene() {
           dampingFactor={0.1}
           zoomSpeed={0.6}
           enabled={!draggingId && !selectedId}
-          minDistance={5}
-          maxDistance={20}
+          minDistance={distance * 0.45}
+          maxDistance={distance * 1.5}
           target={[0, 0.3, 0]}
         />
 
