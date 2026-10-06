@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
+import { VIEW_DIRECTION } from "./camera";
 import { seededRandom } from "./random";
 
 /**
@@ -21,13 +22,103 @@ const SKY_HORIZON = "#cfe9f2";
 /** Ceata are culoarea orizontului, altfel departarile taie brusc. */
 export const HAZE_COLOR = "#cfe9f2";
 
+/** Raza cupolei. Trebuie sa cuprinda si colturile panzei din fundal. */
+const SKY_RADIUS = 150;
+
 export function World() {
   return (
     <>
       <SkyDome />
       <Sun />
+      <Valley />
       <Clouds />
     </>
+  );
+}
+
+/** Cat de departe, in spatele insulei, sta valea pictata. */
+const VALLEY_DISTANCE = 42;
+
+/** Cat de lata e panza. Trebuie sa umple cadrul si la departarea maxima. */
+const VALLEY_SIZE = 78;
+
+/**
+ * Valea de dedesubt.
+ *
+ * O singura imagine pictata, asezata perpendicular pe privire - ca o panza de
+ * fundal din film. Imaginea are perspectiva ei, cu linia orizontului inauntru;
+ * intinsa pe un plan orizontal, ca un teren adevarat, perspectiva ei s-ar
+ * aduna peste cea a camerei si valea s-ar culca.
+ *
+ * Merge pentru ca unghiul camerei nu se schimba niciodata. Deplasarea si
+ * apropierea o misca mai putin decat insula, fiind mult mai departe, si tocmai
+ * de asta se citeste ca departare.
+ */
+function Valley() {
+  const texture = useTexture("/garden3d/textures/valley.webp");
+
+  const { position, quaternion } = useMemo(() => {
+    /* In spatele insulei fata de camera, deci si mai jos: privirea vine de sus. */
+    const position = VIEW_DIRECTION.clone().multiplyScalar(-VALLEY_DISTANCE);
+
+    /* Normala planului e +Z. O intoarcem spre camera. */
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 0, 1),
+      VIEW_DIRECTION,
+    );
+
+    return { position, quaternion };
+  }, []);
+
+  /* Ceata o aplicam singuri, ca sa controlam si marginile. Ceata scenei ar fi
+     inecat-o uniform, si tot s-ar fi vazut unde se termina panza. */
+  const fade = useCallback(
+    (shader: THREE.WebGLProgramParametersWithUniforms) => {
+      shader.uniforms.uHaze = { value: new THREE.Color(HAZE_COLOR) };
+
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec2 vFade;")
+        .replace("#include <uv_vertex>", "#include <uv_vertex>\nvFade = uv;");
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          "#include <common>",
+          "#include <common>\nuniform vec3 uHaze;\nvarying vec2 vFade;",
+        )
+        .replace(
+          "#include <map_fragment>",
+          `#include <map_fragment>
+           /* Panza e mai lata decat ecranul, ca sa nu i se vada marginile. Din
+              ea se foloseste doar partea de jos: sus se face transparenta si
+              ramane cerul. Vopsita in culoarea cetii in loc sa se stearga, ar
+              fi acoperit cupola cu o pata plata si albastrul ar fi disparut.
+              Pragurile sunt in coordonatele panzei; pe ecran se vede banda
+              dintre 0.12 si 0.89, restul cade in afara cadrului. */
+           float vanish = max(
+             smoothstep(0.44, 0.74, vFade.y),
+             smoothstep(0.66, 0.92, abs(vFade.x - 0.5) * 2.0)
+           );
+
+           /* Putina ceata peste tot, ca valea sa stea in departare. */
+           diffuseColor.rgb = mix(diffuseColor.rgb, uHaze, 0.2 + 0.5 * vanish);
+           diffuseColor.a *= 1.0 - vanish;`,
+        );
+    },
+    [],
+  );
+
+  return (
+    <mesh position={position} quaternion={quaternion}>
+      <planeGeometry args={[VALLEY_SIZE, VALLEY_SIZE]} />
+      <meshBasicMaterial
+        map={texture}
+        /* Ceata scenei e deja cuprinsa in amestecul de mai sus. */
+        fog={false}
+        transparent
+        depthWrite={false}
+        onBeforeCompile={fade}
+      />
+    </mesh>
   );
 }
 
@@ -48,7 +139,7 @@ function SkyDome() {
 
   return (
     <mesh scale={[-1, 1, 1]}>
-      <sphereGeometry args={[60, 32, 16]} />
+      <sphereGeometry args={[SKY_RADIUS, 32, 16]} />
       <shaderMaterial
         uniforms={uniforms}
         depthWrite={false}
@@ -66,8 +157,10 @@ function SkyDome() {
           varying vec3 vWorld;
 
           void main() {
-            /* Inaltimea normalizata, inmuiata ca trecerea sa nu aiba o dunga. */
-            float h = clamp(vWorld.y / 60.0, -1.0, 1.0) * 0.5 + 0.5;
+            /* Inaltimea pe cupola, luata din directie, nu din pozitie: asa nu
+               depinde de raza. Legat de raza, gradientul s-a stins cu totul
+               cand cupola a fost marita ca sa cuprinda panza din fundal. */
+            float h = normalize(vWorld).y * 0.5 + 0.5;
             float t = smoothstep(0.42, 0.95, h);
             gl_FragColor = vec4(mix(uHorizon, uTop, t), 1.0);
           }

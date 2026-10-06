@@ -20,6 +20,7 @@ import { nearestPlot, place, PLOTS } from "./plots";
 import { STAGE_DISTANCE, updateStageTarget } from "./stage";
 import { tickWind } from "./wind";
 import { World } from "./World";
+import { CAMERA_FOV, framingDistance, framingPosition } from "./camera";
 import { Button } from "@/components/ui/Button";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Sheet } from "@/components/ui/Sheet";
@@ -159,13 +160,6 @@ for (const item of DECOR) useGLTF.preload(item.url);
 useGLTF.preload("/garden3d/fence.glb");
 useGLTF.preload("/garden3d/bird.glb");
 
-/** Raza zonei care trebuie sa incapa in cadru la pornire. */
-const CONTENT_RADIUS = 4.55;
-const CAMERA_FOV = 42;
-
-/* Unghiul din care se vede gradina. Nu se schimba niciodata. */
-const CAMERA_DIRECTION = { x: 0.62, y: 0.72, z: 1 };
-
 /**
  * Cat trebuie sa se miste degetul ca sa fie tragere, nu atingere.
  *
@@ -175,24 +169,6 @@ const CAMERA_DIRECTION = { x: 0.62, y: 0.72, z: 1 };
  * trecea drept tragere si cardul nu se mai deschidea pe telefon.
  */
 const DRAG_THRESHOLD = 10;
-
-/** Distanta de la care gradina incape intreaga in cadru. */
-function framingDistance(width: number, height: number): number {
-  const aspect = width / Math.max(height, 1);
-  const verticalFov = (CAMERA_FOV * Math.PI) / 180;
-  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * aspect);
-
-  /* Ne incadram dupa axa mai stramta: pe telefon e cea orizontala. */
-  const narrowest = Math.min(verticalFov, horizontalFov);
-  return (CONTENT_RADIUS / Math.tan(narrowest / 2)) * 1.02;
-}
-
-function framingPosition(distance: number): [number, number, number] {
-  const { x, y, z } = CAMERA_DIRECTION;
-  const length = Math.sqrt(x * x + y * y + z * z);
-
-  return [(x / length) * distance, (y / length) * distance + 0.4, (z / length) * distance];
-}
 
 export function GardenScene() {
   const [plants, setPlants] = useState(INITIAL_PLANTS);
