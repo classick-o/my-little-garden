@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, Droplets, Sprout, X } from "lucide-react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -19,6 +20,20 @@ import { nearestPlot, place, PLOTS } from "./plots";
 import { STAGE_DISTANCE, updateStageTarget } from "./stage";
 import { tickWind } from "./wind";
 import { World } from "./World";
+import { Button } from "@/components/ui/Button";
+import { ProgressRing } from "@/components/ui/ProgressRing";
+import { Sheet } from "@/components/ui/Sheet";
+import { Stat } from "@/components/ui/Stat";
+import { StatusPill } from "@/components/ui/StatusPill";
+import type { Tone } from "@/components/ui/tone";
+import { careStatusFromDaysLeft, type CareStatus } from "@/lib/watering";
+
+/** Culoarea fiecarei stari, aceeasi in pastila si in inelul de progres. */
+const STATUS_TONE: Record<CareStatus, Tone> = {
+  healthy: "leaf",
+  needs_water: "water",
+  needs_attention: "sun",
+};
 
 /**
  * Gradina 3D - test vizual.
@@ -47,6 +62,7 @@ type GardenPlant = {
      daca toate s-ar misca la fel, scena ar parea facuta din acelasi material. */
   wind: number;
   wateredDaysAgo: number;
+  wateringIntervalDays: number;
   daysOwned: number;
 };
 
@@ -61,6 +77,7 @@ const INITIAL_PLANTS: GardenPlant[] = [
     rotation: 0.3,
     wind: 1,
     wateredDaysAgo: 3,
+    wateringIntervalDays: 7,
     daysOwned: 184,
   },
   {
@@ -72,7 +89,8 @@ const INITIAL_PLANTS: GardenPlant[] = [
     height: 1.15,
     rotation: -0.45,
     wind: 0.3,
-    wateredDaysAgo: 11,
+    wateredDaysAgo: 16,
+    wateringIntervalDays: 14,
     daysOwned: 92,
   },
   {
@@ -84,7 +102,8 @@ const INITIAL_PLANTS: GardenPlant[] = [
     height: 0.52,
     rotation: 0.9,
     wind: 0.12,
-    wateredDaysAgo: 6,
+    wateredDaysAgo: 19,
+    wateringIntervalDays: 12,
     daysOwned: 41,
   },
   {
@@ -97,6 +116,7 @@ const INITIAL_PLANTS: GardenPlant[] = [
     rotation: -1,
     wind: 0.85,
     wateredDaysAgo: 1,
+    wateringIntervalDays: 7,
     daysOwned: 230,
   },
 ];
@@ -201,7 +221,27 @@ export function GardenScene() {
     grab: { x: number; z: number } | null;
   } | null>(null);
 
+  /* Planta udata chiar acum, cat tine mesajul de confirmare. */
+  const [justWatered, setJustWatered] = useState<string | null>(null);
+
   const selected = plants.find((plant) => plant.id === selectedId) ?? null;
+
+  const water = useCallback((id: string) => {
+    setPlants((previous) =>
+      previous.map((plant) =>
+        plant.id === id ? { ...plant, wateredDaysAgo: 0 } : plant,
+      ),
+    );
+    setJustWatered(id);
+  }, []);
+
+  /* Mesajul de confirmare se retrage singur. */
+  useEffect(() => {
+    if (!justWatered) return;
+
+    const timer = window.setTimeout(() => setJustWatered(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [justWatered]);
 
   /* Parcela spre care se indreapta planta trasa. */
   const targetPlot = useMemo(
@@ -434,6 +474,10 @@ export function GardenScene() {
       <Overlay
         selected={selected}
         dragging={Boolean(draggingId)}
+        /* Si ca e selectata ceva: fara asta, null === null da adevarat
+           cand nu e nimic deschis. */
+        justWatered={Boolean(selectedId) && justWatered === selectedId}
+        onWater={water}
         onClose={() => setSelectedId(null)}
       />
     </div>
@@ -504,30 +548,46 @@ function Dimmer({ active }: { active: boolean }) {
 type OverlayProps = {
   selected: GardenPlant | null;
   dragging: boolean;
+  justWatered: boolean;
+  onWater: (id: string) => void;
   onClose: () => void;
 };
 
-function Overlay({ selected, dragging, onClose }: OverlayProps) {
+function Overlay({ selected, dragging, justWatered, onWater, onClose }: OverlayProps) {
   const open = Boolean(selected);
+
+  /* Cat mai e pana la udare. Totul e in zile intregi, deci se poate calcula
+     fara ceas - altfel serverul si browserul ar ajunge la numere diferite. */
+  const daysLeft = selected
+    ? selected.wateringIntervalDays - selected.wateredDaysAgo
+    : 0;
+  const status = careStatusFromDaysLeft(selected ? daysLeft : null);
+  const tone = STATUS_TONE[status];
+
+  /* Inelul e plin dupa udare si se goleste pe masura ce trec zilele, ca o
+     baterie. Invers - umplandu-se - ar fi fost gol exact dupa o udare reusita,
+     adica tocmai cand utilizatorul a facut ce trebuia. Gol la final nu deranjeaza:
+     acolo vorbesc oricum si pastila, si butonul. */
+  const remaining = selected
+    ? Math.max(0, daysLeft) / Math.max(selected.wateringIntervalDays, 1)
+    : 0;
+
+  const wateredToday = selected?.wateredDaysAgo === 0;
 
   return (
     <>
       {/* Antetul se retrage cand se deschide cardul. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 p-5 pt-[max(env(safe-area-inset-top),1.25rem)] transition-all duration-500 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 p-4 pt-[max(env(safe-area-inset-top),1rem)] transition-all duration-(--duration-slow) ease-(--ease-out-soft) ${
           open ? "-translate-y-3 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
-        <div className="glass inline-block rounded-2xl px-4 py-3 shadow-card">
+        <div className="glass-over inline-block rounded-2xl px-4 py-3 shadow-card">
           <p className="text-[11px] uppercase tracking-wide text-ink-subtle">
             Test vizual
           </p>
           <h1 className="mt-0.5 text-[1.7rem] leading-none">Gradina ta</h1>
-          <p
-            className={`mt-1.5 text-[12px] transition-colors duration-300 ${
-              dragging ? "text-leaf" : "text-ink-muted"
-            }`}
-          >
+          <p className="mt-1.5 text-[13px] text-ink-muted">
             {dragging
               ? "Aseaz-o intr-o parcela"
               : "Trage o planta. Atinge-o ca sa o vezi."}
@@ -535,63 +595,91 @@ function Overlay({ selected, dragging, onClose }: OverlayProps) {
         </div>
       </div>
 
-      {/* Cardul plantei. */}
-      <div
-        className={`absolute inset-x-0 bottom-0 p-4 pb-[max(env(safe-area-inset-bottom),1rem)] transition-all duration-500 ease-(--ease-out-soft) ${
-          open
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-8 opacity-0"
-        }`}
-      >
-        <article className="glass mx-auto max-w-sm rounded-2xl p-5 shadow-float">
+      {/* Cardul plantei. Fara val propriu: gradina se stinge singura in spate,
+          din Dimmer, iar doua straturi de intuneric peste ar inchide scena. */}
+      <Sheet open={open} onClose={onClose} over scrim={false} label="Detalii planta">
+        <div className="p-5 pt-3">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-[1.6rem] leading-tight">{selected?.name ?? ""}</h2>
-              <p className="text-[13px] text-ink-muted">{selected?.species ?? ""}</p>
+            <div className="min-w-0">
+              <h2 className="truncate text-[1.6rem] leading-tight">
+                {selected?.name ?? ""}
+              </h2>
+              <p className="truncate text-[13px] text-ink-muted">
+                {selected?.species ?? ""}
+              </p>
             </div>
 
-            <button
-              onClick={onClose}
-              aria-label="Inchide"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface text-ink-muted ring-1 ring-line transition-colors hover:text-ink"
-            >
-              &#10005;
-            </button>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Inchide">
+              <X className="size-5" />
+            </Button>
           </div>
 
-          <div className="mt-4 flex gap-2">
-            <Stat
-              label="Udata"
-              value={`acum ${selected?.wateredDaysAgo ?? 0} zile`}
-              tone="water"
-            />
-            <Stat label="Impreuna" value={`${selected?.daysOwned ?? 0} zile`} tone="leaf" />
+          <StatusPill status={status} className="mt-2.5" />
+
+          <div className="mt-3.5 flex items-center gap-3">
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              <ProgressRing value={remaining} tone={tone} size={58}>
+                {daysLeft > 0 ? (
+                  <>
+                    <span className="text-[17px] font-semibold">{daysLeft}</span>
+                    <span className="text-[10px] text-ink-subtle">
+                      {daysLeft === 1 ? "zi" : "zile"}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[13px] font-semibold">acum</span>
+                )}
+              </ProgressRing>
+              <span className="text-[10px] uppercase tracking-wide text-ink-subtle">
+                Udare
+              </span>
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <Stat
+                label="Udata"
+                value={
+                  wateredToday ? "astazi" : `acum ${selected?.wateredDaysAgo ?? 0} zile`
+                }
+                tone="water"
+                icon={<Droplets className="size-4" />}
+              />
+              <Stat
+                label="Impreuna"
+                value={`${selected?.daysOwned ?? 0} zile`}
+                tone="leaf"
+                icon={<Sprout className="size-4" />}
+              />
+            </div>
           </div>
 
-          <button className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-leaf text-[14px] font-semibold text-ink-inverse transition-transform duration-200 active:scale-[0.98]">
-            Uda planta
-          </button>
-        </article>
-      </div>
+          {/* Confirmarea intra chiar in buton. Ca doua elemente care se
+              schimba intre ele, in timpul tranzitiei se suprapuneau doua texte
+              in acelasi loc si nu se citea niciunul. */}
+          <Button
+            size="lg"
+            aria-live="polite"
+            /* Verdele plin inseamna "ai ceva de facut". Cand planta e udata si
+               confirmarea a trecut, butonul se retrage in sticla. */
+            variant={wateredToday && !justWatered ? "soft" : "primary"}
+            disabled={wateredToday}
+            onClick={() => selected && onWater(selected.id)}
+            className="mt-3.5 w-full"
+          >
+            {justWatered ? (
+              <>
+                <Check className="size-[18px]" />
+                {`Gata. ${selected?.name ?? ""} e fericita`}
+              </>
+            ) : (
+              <>
+                <Droplets className="size-[18px]" />
+                {wateredToday ? "Udata astazi" : "Uda planta"}
+              </>
+            )}
+          </Button>
+        </div>
+      </Sheet>
     </>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: "water" | "leaf";
-}) {
-  return (
-    <div className="flex-1 rounded-xl bg-surface-sunken p-3">
-      <p className="text-[11px] text-ink-subtle">{label}</p>
-      <p className={`mt-0.5 text-[13px] ${tone === "water" ? "text-water" : "text-leaf"}`}>
-        {value}
-      </p>
-    </div>
   );
 }

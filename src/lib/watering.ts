@@ -77,17 +77,26 @@ export function isDueForWatering(
   return now.getTime() >= next.getTime();
 }
 
+/**
+ * Starea plantei, calculata direct din cate zile mai sunt pana la udare.
+ *
+ * Varianta fara ceas: componentele o pot chema in randare. `careStatus`
+ * citeste ora curenta, iar o citire de ceas in randare da rezultate diferite
+ * pe server si in browser.
+ */
+export function careStatusFromDaysLeft(daysLeft: number | null): CareStatus {
+  /* Neudata niciodata: are nevoie de apa, dar nu e un semnal de alarma. */
+  if (daysLeft === null) return "needs_water";
+
+  if (daysLeft < -OVERDUE_GRACE_DAYS) return "needs_attention";
+  if (daysLeft <= 0) return "needs_water";
+
+  return "healthy";
+}
+
 export function careStatus(
   plant: PlantWateringInput,
   now: Date = new Date(),
 ): CareStatus {
-  const remaining = daysUntilWatering(plant, now);
-
-  /* Neudata niciodata: are nevoie de apa, dar nu e un semnal de alarma. */
-  if (remaining === null) return "needs_water";
-
-  if (remaining < -OVERDUE_GRACE_DAYS) return "needs_attention";
-  if (remaining <= 0) return "needs_water";
-
-  return "healthy";
+  return careStatusFromDaysLeft(daysUntilWatering(plant, now));
 }

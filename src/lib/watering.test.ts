@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   careStatus,
+  careStatusFromDaysLeft,
   daysSinceWatering,
   daysUntilWatering,
   isDueForWatering,
@@ -116,5 +117,24 @@ describe("careStatus", () => {
     expect(
       careStatus({ lastWateredAt: null, wateringIntervalDays: 7 }, NOW),
     ).toBe("needs_water");
+  });
+});
+
+describe("careStatusFromDaysLeft", () => {
+  it("e bine cand mai e timp", () => {
+    expect(careStatusFromDaysLeft(3)).toBe("healthy");
+  });
+
+  it("cere apa in ziua udarii si cateva zile dupa", () => {
+    expect(careStatusFromDaysLeft(0)).toBe("needs_water");
+    expect(careStatusFromDaysLeft(-4)).toBe("needs_water");
+  });
+
+  it("cere atentie dupa ce trece perioada de gratie", () => {
+    expect(careStatusFromDaysLeft(-5)).toBe("needs_attention");
+  });
+
+  it("trateaza planta neudata niciodata ca avand nevoie de apa", () => {
+    expect(careStatusFromDaysLeft(null)).toBe("needs_water");
   });
 });

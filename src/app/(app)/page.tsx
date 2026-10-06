@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Leaf } from "lucide-react";
+import { buttonStyle } from "@/components/ui/Button";
 import { greeting } from "@/lib/time";
 
 /* Salutul depinde de ora, deci pagina nu poate fi prerandata.
@@ -29,7 +30,7 @@ export default function GardenPage() {
 
         <Link
           href="/plants/new"
-          className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-leaf px-6 text-sm font-semibold text-ink-inverse shadow-raised transition-transform duration-(--duration-quick) hover:bg-leaf-deep active:scale-[0.98]"
+          className={buttonStyle({ size: "lg", className: "mt-6" })}
         >
           Adauga prima planta
         </Link>

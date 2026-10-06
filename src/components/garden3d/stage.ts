@@ -17,8 +17,11 @@ export const STAGE_DISTANCE = 3;
  * Masurat pe axa verticala a CAMEREI, nu pe cea a lumii. Camera priveste in
  * jos, si se poate si roti - cu verticala lumii, planta ar aluneca pe ecran
  * de fiecare data cand utilizatorul schimba unghiul.
+ *
+ * Valoarea e aleasa cat sa ramana deasupra cardului care urca de jos: mai
+ * jos, ghiveciul intra sub card si planta pare taiata.
  */
-const STAGE_OFFSET = -0.28;
+const STAGE_OFFSET = -0.06;
 
 export const stageTarget = new THREE.Vector3();
 

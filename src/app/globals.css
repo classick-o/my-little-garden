@@ -20,6 +20,13 @@
   --color-surface-strong: rgba(255, 255, 255, 0.16);
   --color-surface-sunken: rgba(0, 0, 0, 0.2);
 
+  /* Suprafete pentru interfata asezata peste ceva luminos: o poza de planta
+     sau cerul din gradina 3D. Sticla alba peste albastru deschis da text alb
+     pe fundal deschis, adica nimic citibil - exact costul descris in
+     CLAUDE.md sectiunea 5. Acolo suprafata trebuie sa fie inchisa. */
+  --color-surface-over: rgba(9, 32, 21, 0.58);
+  --color-surface-over-strong: rgba(9, 32, 21, 0.76);
+
   /* --- Culori: text ---------------------------------------------------- */
   --color-ink: #ffffff;
   --color-ink-muted: rgba(255, 255, 255, 0.65);
@@ -162,6 +169,15 @@ h3 {
 @utility glass {
   background-color: var(--color-surface);
   backdrop-filter: blur(20px);
+  border: 1px solid var(--color-line);
+}
+
+/* Acelasi card, dar asezat peste ceva luminos: poza de planta sau gradina 3D.
+   Saturatia ridicata pastreaza culoarea scenei vie prin sticla; fara ea,
+   intunecarea o face cenusie. */
+@utility glass-over {
+  background-color: var(--color-surface-over);
+  backdrop-filter: blur(22px) saturate(150%);
   border: 1px solid var(--color-line);
 }
 
