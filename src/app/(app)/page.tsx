@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Leaf } from "lucide-react";
+import { Leaf, Trees } from "lucide-react";
 import { buttonStyle } from "@/components/ui/Button";
 import { greeting } from "@/lib/time";
 
@@ -33,6 +33,16 @@ export default function GardenPage() {
           className={buttonStyle({ size: "lg", className: "mt-6" })}
         >
           Adauga prima planta
+        </Link>
+
+        {/* Gradina 3D e o a doua privire asupra acelorasi plante, nu alt loc
+            unde se adauga ceva. De asta e actiune secundara. */}
+        <Link
+          href="/garden"
+          className={buttonStyle({ variant: "soft", className: "mt-3 w-full" })}
+        >
+          <Trees className="size-[18px]" />
+          Vezi gradina in 3D
         </Link>
       </section>
     </div>

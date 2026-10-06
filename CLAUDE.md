@@ -172,6 +172,8 @@ stari de incarcare/goale/eroare pentru fiecare feature.
 | 2026-09-11 | `next_watering_at` se calculeaza, nu se stocheaza | O singura sursa de adevar: `last_watered_at` + interval |
 | 2026-09-11 | Starea `thriving` amanata | V1 nu are semnalele care sa o justifice; nu inventam stari |
 | 2026-09-12 | Tema intunecata, dupa o referinta vizuala | Decizia proprietarului, inlocuieste alegerea initiala de tema luminoasa |
+| 2026-10-07 | Gradina 3D devine pagina in aplicatie, la `/garden`; prototipul `/preview/garden3d` se sterge | A fost acceptata ca directie dupa prototip. Sta in afara invelisului: cardul plantei urca tocmai de unde ar fi stat bara de navigatie |
+| 2026-10-07 | Modelele 3D vin dintr-o biblioteca de specii, nu din generare la cerere | Nimeni nu ar verifica rezultatul inainte sa ajunga in gradina ei, iar un model din zece iesit in alt stil strica tot setul. Plus 1-5 minute de asteptare si cost pe fiecare scanare. Generarea ramane act de autor - vezi [docs/plan-gradina-3d.md](docs/plan-gradina-3d.md) |
 | 2026-09-11 | Model implicit `gemini-3.5-flash` | Masurat: ~13s si constant. `3.8-flash` da 503 des; `flash-lite` e de 3x mai rapid dar e un model mai slab la recunoastere fina, iar identificarea speciei e chiar miezul functiei |
 
 ---

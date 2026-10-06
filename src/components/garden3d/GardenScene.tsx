@@ -1,7 +1,8 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Droplets, Sprout, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Check, Droplets, Sprout, X } from "lucide-react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -20,6 +21,7 @@ import { nearestPlot, place, PLOTS } from "./plots";
 import { STAGE_DISTANCE, updateStageTarget } from "./stage";
 import { tickWind } from "./wind";
 import { World } from "./World";
+import type { GardenPlant } from "./garden-plant";
 import { CAMERA_FOV, framingDistance, framingPosition } from "./camera";
 import { Button } from "@/components/ui/Button";
 import { ProgressRing } from "@/components/ui/ProgressRing";
@@ -37,7 +39,10 @@ const STATUS_TONE: Record<CareStatus, Tone> = {
 };
 
 /**
- * Gradina 3D - test vizual.
+ * Gradina 3D.
+ *
+ * Primeste plantele din afara si nu stie de unde vin: acum sunt cele de proba,
+ * mai tarziu vor veni din baza de date. Vezi docs/plan-gradina-3d.md.
  *
  * O insula patrata care pluteste pe cer. Plantele stau in parcele si se pot
  * muta dintr-una in alta. O atingere scurta aduce planta in prim-plan.
@@ -49,78 +54,6 @@ const STATUS_TONE: Record<CareStatus, Tone> = {
  * EffectComposer dadea ecran negru - reprodus local, nu presupus - si era
  * oricum partea cea mai scumpa pe telefon. Vinieta e acum un strat CSS.
  */
-
-type GardenPlant = {
-  id: string;
-  name: string;
-  species: string;
-  url: string;
-  /** Parcela in care sta. Pozitia reala vine din PLOTS. */
-  plot: number;
-  height: number;
-  rotation: number;
-  /* Cat de mult o misca vantul. O sansevieria e rigida, un pothos cade moale -
-     daca toate s-ar misca la fel, scena ar parea facuta din acelasi material. */
-  wind: number;
-  wateredDaysAgo: number;
-  wateringIntervalDays: number;
-  daysOwned: number;
-};
-
-const INITIAL_PLANTS: GardenPlant[] = [
-  {
-    id: "luna",
-    name: "Luna",
-    species: "Monstera deliciosa",
-    url: "/garden3d/monstera.glb",
-    plot: 0,
-    height: 1.3,
-    rotation: 0.3,
-    wind: 1,
-    wateredDaysAgo: 3,
-    wateringIntervalDays: 7,
-    daysOwned: 184,
-  },
-  {
-    id: "stela",
-    name: "Stela",
-    species: "Sansevieria trifasciata",
-    url: "/garden3d/sansevieria.glb",
-    plot: 2,
-    height: 1.15,
-    rotation: -0.45,
-    wind: 0.3,
-    wateredDaysAgo: 16,
-    wateringIntervalDays: 14,
-    daysOwned: 92,
-  },
-  {
-    id: "pufi",
-    name: "Pufi",
-    species: "Echeveria elegans",
-    url: "/garden3d/echeveria.glb",
-    plot: 4,
-    height: 0.52,
-    rotation: 0.9,
-    wind: 0.12,
-    wateredDaysAgo: 19,
-    wateringIntervalDays: 12,
-    daysOwned: 41,
-  },
-  {
-    id: "iedera",
-    name: "Iedera",
-    species: "Epipremnum aureum",
-    url: "/garden3d/pothos.glb",
-    plot: 7,
-    height: 0.88,
-    rotation: -1,
-    wind: 0.85,
-    wateredDaysAgo: 1,
-    wateringIntervalDays: 7,
-    daysOwned: 230,
-  },
-];
 
 /** Decorul fix. Nu se poate muta si nu se poate selecta. */
 const DECOR = [
@@ -155,7 +88,6 @@ const FENCE_POSTS = Array.from({ length: 7 }, (_, index) => ({
   z: ISLAND_HALF - 0.28,
 }));
 
-for (const plant of INITIAL_PLANTS) useGLTF.preload(plant.url);
 for (const item of DECOR) useGLTF.preload(item.url);
 useGLTF.preload("/garden3d/fence.glb");
 useGLTF.preload("/garden3d/bird.glb");
@@ -170,8 +102,15 @@ useGLTF.preload("/garden3d/bird.glb");
  */
 const DRAG_THRESHOLD = 10;
 
-export function GardenScene() {
-  const [plants, setPlants] = useState(INITIAL_PLANTS);
+export function GardenScene({
+  plants: initialPlants,
+  backHref,
+}: {
+  plants: GardenPlant[];
+  /* Scena nu stie rutele aplicatiei; primeste doar unde duce iesirea. */
+  backHref?: string;
+}) {
+  const [plants, setPlants] = useState(initialPlants);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -449,6 +388,7 @@ export function GardenScene() {
 
       <Overlay
         selected={selected}
+        backHref={backHref}
         dragging={Boolean(draggingId)}
         /* Si ca e selectata ceva: fara asta, null === null da adevarat
            cand nu e nimic deschis. */
@@ -523,13 +463,21 @@ function Dimmer({ active }: { active: boolean }) {
 
 type OverlayProps = {
   selected: GardenPlant | null;
+  backHref?: string;
   dragging: boolean;
   justWatered: boolean;
   onWater: (id: string) => void;
   onClose: () => void;
 };
 
-function Overlay({ selected, dragging, justWatered, onWater, onClose }: OverlayProps) {
+function Overlay({
+  selected,
+  backHref,
+  dragging,
+  justWatered,
+  onWater,
+  onClose,
+}: OverlayProps) {
   const open = Boolean(selected);
 
   /* Cat mai e pana la udare. Totul e in zile intregi, deci se poate calcula
@@ -552,23 +500,30 @@ function Overlay({ selected, dragging, justWatered, onWater, onClose }: OverlayP
 
   return (
     <>
-      {/* Antetul se retrage cand se deschide cardul. */}
+      {/* Antetul se retrage cand se deschide cardul, ca sa nu concureze cu el. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 p-4 pt-[max(env(safe-area-inset-top),1rem)] transition-all duration-(--duration-slow) ease-(--ease-out-soft) ${
-          open ? "-translate-y-3 opacity-0" : "translate-y-0 opacity-100"
+        className={`absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 pt-[max(env(safe-area-inset-top),1rem)] transition-all duration-(--duration-slow) ease-(--ease-out-soft) ${
+          open ? "pointer-events-none -translate-y-3 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
-        <div className="glass-over inline-block rounded-2xl px-4 py-3 shadow-card">
-          <p className="text-[11px] uppercase tracking-wide text-ink-subtle">
-            Test vizual
-          </p>
-          <h1 className="mt-0.5 text-[1.7rem] leading-none">Gradina ta</h1>
+        <div className="glass-over pointer-events-none rounded-2xl px-4 py-3 shadow-card">
+          <h1 className="text-[1.7rem] leading-none">Gradina ta</h1>
           <p className="mt-1.5 text-[13px] text-ink-muted">
             {dragging
               ? "Aseaz-o intr-o parcela"
               : "Trage o planta. Atinge-o ca sa o vezi."}
           </p>
         </div>
+
+        {backHref ? (
+          <Link
+            href={backHref}
+            aria-label="Inapoi"
+            className="glass-over flex size-11 shrink-0 items-center justify-center rounded-full text-ink shadow-card transition-transform duration-(--duration-quick) active:scale-95"
+          >
+            <ArrowLeft className="size-5" />
+          </Link>
+        ) : null}
       </div>
 
       {/* Cardul plantei. Fara val propriu: gradina se stinge singura in spate,
