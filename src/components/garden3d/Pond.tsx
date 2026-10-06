@@ -4,26 +4,28 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+/** Unde sta iazul pe insula si cat de mare e. */
+export const POND = { x: 2.05, z: 1.95, radius: 0.78 };
+
 /**
  * Iazul.
  *
- * Apa e desenata in shader, nu dintr-o textura: unde si sclipiri care se misca
- * incet. O textura ar fi insemnat inca un fisier si aceeasi imagine inghetata.
+ * Insula e o cutie, deci nu se poate sapa o gaura in ea. Adancimea se
+ * sugereaza in schimb: o fasie de nisip in jur si un inel inchis la culoare
+ * chiar sub marginea apei, care citeste ca umbra malului. Prima varianta chiar
+ * cobora apa sub nivelul ierbii - si disparea complet sub cutia insulei.
+ *
+ * Apa e desenata in shader. Primele incercari foloseau doua unde inmultite,
+ * ceea ce dadea o retea de buline - aici sunt fasii care curg, nu puncte.
  */
-export function Pond({
-  position,
-  radius = 0.8,
-}: {
-  position: [number, number, number];
-  radius?: number;
-}) {
+export function Pond() {
   const material = useRef<THREE.ShaderMaterial>(null);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uShallow: { value: new THREE.Color("#8fd8e8") },
-      uDeep: { value: new THREE.Color("#3f8fb0") },
+      uShallow: { value: new THREE.Color("#9fe0ea") },
+      uDeep: { value: new THREE.Color("#2f7fa6") },
     }),
     [],
   );
@@ -35,16 +37,24 @@ export function Pond({
   });
 
   return (
-    <group position={position}>
-      {/* Albia: o scobitura intunecata sub apa, ca iazul sa aiba adancime. */}
-      <mesh position-y={-0.06} rotation-x={-Math.PI / 2}>
-        <circleGeometry args={[radius * 1.02, 32]} />
-        <meshStandardMaterial color="#4a3b2c" roughness={1} />
+    <group position={[POND.x, 0, POND.z]}>
+      {/* Malul de nisip. */}
+      <mesh receiveShadow position-y={0.006} rotation-x={-Math.PI / 2}>
+        <circleGeometry args={[POND.radius * 1.2, 40]} />
+        <meshStandardMaterial color="#cbb998" roughness={1} />
+      </mesh>
+
+      {/* Inel inchis la culoare chiar sub marginea apei.
+          Insula e o cutie, deci nu putem sapa o gaura in ea - adancimea se
+          sugereaza cu umbra malului, nu cu geometrie. */}
+      <mesh position-y={0.009} rotation-x={-Math.PI / 2}>
+        <ringGeometry args={[POND.radius * 0.9, POND.radius * 1.04, 40]} />
+        <meshStandardMaterial color="#6a5c42" roughness={1} />
       </mesh>
 
       {/* Luciul apei. */}
-      <mesh position-y={0.015} rotation-x={-Math.PI / 2}>
-        <circleGeometry args={[radius, 48]} />
+      <mesh position-y={0.013} rotation-x={-Math.PI / 2}>
+        <circleGeometry args={[POND.radius, 48]} />
         <shaderMaterial
           ref={material}
           uniforms={uniforms}
@@ -64,22 +74,26 @@ export function Pond({
             varying vec2 vUv;
 
             void main() {
-              vec2 centred = vUv - 0.5;
-              float distance = length(centred);
+              vec2 p = vUv - 0.5;
+              float distance = length(p) * 2.0;
 
-              /* Unde concentrice care pleaca din centru. */
-              float ripple = sin(distance * 34.0 - uTime * 1.6) * 0.5 + 0.5;
+              /* Trei fasii care curg in directii usor diferite. Suprapuse, nu
+                 inmultite - inmultirea face o retea de puncte. */
+              float bands =
+                  sin((p.x + p.y) * 9.0 + uTime * 0.7)
+                + sin((p.x - p.y) * 7.0 - uTime * 0.5) * 0.7
+                + sin(p.y * 13.0 + uTime * 0.9) * 0.4;
 
-              /* Sclipiri: doua unde incrucisate, mult mai fine. */
-              float glint = sin(vUv.x * 42.0 + uTime * 0.9)
-                          * sin(vUv.y * 38.0 - uTime * 1.1);
-              glint = smoothstep(0.75, 1.0, glint);
+              float shimmer = smoothstep(1.1, 2.1, bands);
 
-              /* Marginea e mai deschisa: acolo apa e mai putin adanca. */
-              vec3 water = mix(uShallow, uDeep, smoothstep(0.5, 0.05, distance));
-              water += ripple * 0.06 + glint * 0.35;
+              /* Mai adanca spre mijloc, mai deschisa spre mal. */
+              vec3 water = mix(uDeep, uShallow, smoothstep(0.1, 1.0, distance));
+              water = mix(water, vec3(1.0), shimmer * 0.5);
 
-              gl_FragColor = vec4(water, 0.88);
+              /* Se stinge spre margine, ca sa se topeasca in mal. */
+              float alpha = 0.9 * smoothstep(1.02, 0.86, distance);
+
+              gl_FragColor = vec4(water, alpha);
             }
           `}
         />

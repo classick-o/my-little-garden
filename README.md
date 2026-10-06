@@ -30,6 +30,21 @@ pe toata reteaua, nu doar pe localhost.
 
 De pe telefonul conectat la acelasi Wi-Fi, deschide `http://<ip-ul-calculatorului>:3000`.
 
+> **Un test de pe calculator NU dovedeste ca telefonul ajunge la server.**
+> `curl` catre IP-ul din retea merge local chiar si cand firewall-ul sau routerul
+> blocheaza alte dispozitive. Singura verificare valida e sa deschizi adresa chiar
+> de pe telefon.
+
+Pentru testat pe telefon, foloseste build-ul de productie, nu `npm run dev`:
+
+```bash
+npm run build
+npm start
+```
+
+Serverul de dezvoltare incarca pe telefon si unelte de dezvoltare, si harti de cod -
+pe mobil e mult mai lent si poate chiar sa nu porneasca.
+
 **Atentie:** adresa afisata de Next la "Network" poate fi gresita. Daca ai VMware sau
 VirtualBox instalat, Next alege adaptorul lor virtual (`192.168.47.x`), care nu e vizibil
 de pe telefon. Iti trebuie adresa adaptorului **Wi-Fi**:

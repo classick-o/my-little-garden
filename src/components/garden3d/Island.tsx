@@ -8,6 +8,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { PLOTS, PLOT_SIZE } from "./plots";
 import { seededRandom } from "./random";
+import { POND, Pond } from "./Pond";
 import { Mist, Waterfall } from "./Waterfall";
 
 /** Latura insulei. */
@@ -91,6 +92,8 @@ export function Island({
       <mesh geometry={tufts} castShadow receiveShadow>
         <meshStandardMaterial color="#8cc48f" roughness={1} side={THREE.DoubleSide} />
       </mesh>
+
+      <Pond />
 
       {/* Parcelele. */}
       {PLOTS.map((plot, index) => (
@@ -245,6 +248,9 @@ function buildTufts(): THREE.BufferGeometry {
         Math.abs(plot.x - x) < PLOT_SIZE * 0.6 && Math.abs(plot.z - z) < PLOT_SIZE * 0.6,
     );
     if (onPlot) continue;
+
+    /* Nici prin iaz: fire de iarba iesind din apa arata a greseala. */
+    if (Math.hypot(POND.x - x, POND.z - z) < POND.radius * 1.3) continue;
 
     const piece = blade.clone();
     piece.scale(1, 0.7 + random() * 0.9, 1);

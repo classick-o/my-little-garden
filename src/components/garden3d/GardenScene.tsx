@@ -6,13 +6,13 @@ import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 import { AIR_COLOR, Atmosphere } from "./Atmosphere";
+import { SceneMessage } from "./CanvasGuard";
 import { DistantBirds, PerchedBird } from "./Birds";
 import { Butterflies } from "./Butterflies";
 import { Decor } from "./Decor";
 import { Island, ISLAND_HALF } from "./Island";
 import { Islets } from "./Islets";
 import { Petals } from "./Petals";
-import { Pond } from "./Pond";
 import { Plant } from "./Plant";
 import { nearestPlot, place, PLOTS } from "./plots";
 import { STAGE_DISTANCE, updateStageTarget } from "./stage";
@@ -111,7 +111,7 @@ const DECOR = [
   { url: "/garden3d/stones.glb", position: [2.35, 0, -0.5], height: 0.17, rotation: 0.4, wind: 0 },
   { url: "/garden3d/mushrooms.glb", position: [-2.4, 0, 2.5], height: 0.2, rotation: 2.2, wind: 0.25 },
   { url: "/garden3d/stones.glb", position: [1.44, 0, 2.08], height: 0.13, rotation: 2.9, wind: 0 },
-  { url: "/garden3d/stones.glb", position: [2.98, 0, 2.52], height: 0.15, rotation: 1.2, wind: 0 },
+  { url: "/garden3d/stones.glb", position: [2.86, 0, 1.08], height: 0.15, rotation: 1.2, wind: 0 },
 
   /* Florile sunt aici pentru culoare. Scena era aproape numai verde, iar
      verdele singur arata trist oricat de bine ar fi luminat. */
@@ -273,7 +273,18 @@ export function GardenScene() {
            umbre plus postprocesare duce la pierderea contextului grafic. */
         dpr={[1, 1.6]}
         shadows
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        /* Fara powerPreference: pe unele placi mobile cererea asta face ca
+           contextul grafic sa nu porneasca deloc. */
+        gl={{ antialias: true }}
+        /* Daca browserul nu poate porni WebGL, Canvas nu arunca nicio eroare -
+           pur si simplu nu randeaza. Fara mesajul asta, utilizatorul vede un
+           ecran gol si nu afla niciodata de ce. */
+        fallback={
+          <SceneMessage
+            title="Gradina 3D nu poate porni"
+            detail="Browserul nu a putut porni randarea 3D (WebGL). Incearca sa inchizi alte file sau sa redeschizi pagina."
+          />
+        }
         onPointerMissed={() => setSelectedId(null)}
       >
         <PerspectiveCamera makeDefault fov={CAMERA_FOV} position={cameraPosition} />
@@ -288,7 +299,6 @@ export function GardenScene() {
         <Suspense fallback={null}>
           <Islets />
           <Island highlightedPlot={targetPlot} onPointerMove={moveDragged} />
-          <Pond position={[2.28, 0, 2.42]} radius={0.72} />
 
           {plants.map((plant) => {
             const dragging = draggingId === plant.id;
