@@ -112,6 +112,10 @@ type CloudSeed = {
  *
  * Panouri care se intorc mereu spre camera. Plutesc lent si, cand ies prea
  * departe intr-o parte, reapar in cealalta - asa nu se termina niciodata.
+ *
+ * Stau toti in spatele insulei. Asezati pe un cerc in jurul ei, unii treceau
+ * prin fata, iar apropiat se vedea muchia dreapta a panoului taind gradina -
+ * textura nu se stinge la margine, iar de departe asta nu se observa.
  */
 function Clouds() {
   const texture = useTexture("/garden3d/textures/cloud.png");
@@ -121,14 +125,13 @@ function Clouds() {
     const random = seededRandom(99);
 
     return Array.from({ length: CLOUD_COUNT }, () => {
-      const angle = random() * Math.PI * 2;
-      const distance = 9 + random() * 16;
-
       return {
         position: [
-          Math.cos(angle) * distance,
-          -5 + random() * 9,
-          Math.sin(angle) * distance,
+          (random() - 0.5) * 46,
+          -6 + random() * 10,
+          /* Mereu in spate, si destul de departe cat sa nu ajunga langa
+             camera nici la apropierea maxima. */
+          -(11 + random() * 17),
         ] as [number, number, number],
         scale: 4 + random() * 7,
         speed: 0.12 + random() * 0.2,

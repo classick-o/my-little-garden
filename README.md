@@ -45,6 +45,13 @@ npm start
 Serverul de dezvoltare incarca pe telefon si unelte de dezvoltare, si harti de cod -
 pe mobil e mult mai lent si poate chiar sa nu porneasca.
 
+**Opreste serverul inainte de a reface build-ul.** `npm run build` rescrie `.next` sub
+`npm start`, care tine fisierele deschise: serverul ramane pornit, dar raspunde cu 500 la
+tot. Oprire, build, pornire - in ordinea asta.
+
+**Verifica pe ce port a pornit.** Daca 3000 e deja ocupat, Next porneste pe 3001 si scrie
+asta discret la pornire. Fara verificare, tot ce testezi merge la serverul vechi.
+
 **Atentie:** adresa afisata de Next la "Network" poate fi gresita. Daca ai VMware sau
 VirtualBox instalat, Next alege adaptorul lor virtual (`192.168.47.x`), care nu e vizibil
 de pe telefon. Iti trebuie adresa adaptorului **Wi-Fi**:

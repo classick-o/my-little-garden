@@ -12,6 +12,7 @@ import { Butterflies } from "./Butterflies";
 import { Decor } from "./Decor";
 import { Island, ISLAND_HALF } from "./Island";
 import { Islets } from "./Islets";
+import { PanLimits } from "./PanLimits";
 import { Petals } from "./Petals";
 import { Plant } from "./Plant";
 import { nearestPlot, place, PLOTS } from "./plots";
@@ -351,19 +352,35 @@ export function GardenScene() {
         <Dimmer active={Boolean(selectedId)} />
 
         <OrbitControls
-          enablePan={false}
-          /* Cadrul ramane acelasi; se poate doar apropia si departa. */
+          makeDefault
+          /* Unghiul ramane fix. Se poate doar apropia, departa si plimba. */
           enableRotate={false}
           enableZoom
+          enablePan
+          /* Deplasarea urmeaza solul, nu ecranul: altfel, la camera inclinata,
+             o miscare in sus ar ridica privirea in cer in loc sa mearga inainte. */
+          screenSpacePanning={false}
           enableDamping
           dampingFactor={0.1}
           zoomSpeed={0.6}
+          panSpeed={0.9}
           enabled={!draggingId && !selectedId}
-          minDistance={distance * 0.45}
-          maxDistance={distance * 1.5}
+          /* Un deget plimba, doua apropie. Degetul pe o planta e prins de
+             planta, deci cele doua nu se incurca. */
+          touches={{ ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN }}
+          mouseButtons={{
+            LEFT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.PAN,
+          }}
+          minDistance={distance * 0.4}
+          /* Departarea maxima: exact cat sa intre toata gradina cu imprejurimi.
+             Acolo nu mai are rost deplasarea, si se blocheaza singura. */
+          maxDistance={distance * 1.15}
           target={[0, 0.3, 0]}
         />
 
+        <PanLimits fov={CAMERA_FOV} />
       </Canvas>
 
       {/* Vinieta, ca strat CSS peste panza.

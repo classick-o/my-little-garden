@@ -24,8 +24,8 @@ export function Pond() {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uShallow: { value: new THREE.Color("#9fe0ea") },
-      uDeep: { value: new THREE.Color("#2f7fa6") },
+      uShallow: { value: new THREE.Color("#cdf0f6") },
+      uDeep: { value: new THREE.Color("#6ec3da") },
     }),
     [],
   );
@@ -58,6 +58,9 @@ export function Pond() {
         <shaderMaterial
           ref={material}
           uniforms={uniforms}
+          /* Fara corectia de ton a randarii: shaderul scrie culoarea finala,
+             iar corectia o inchidea pana la bleumarin. */
+          toneMapped={false}
           transparent
           depthWrite={false}
           vertexShader={/* glsl */ `
@@ -87,7 +90,7 @@ export function Pond() {
               float shimmer = smoothstep(1.1, 2.1, bands);
 
               /* Mai adanca spre mijloc, mai deschisa spre mal. */
-              vec3 water = mix(uDeep, uShallow, smoothstep(0.1, 1.0, distance));
+              vec3 water = mix(uDeep, uShallow, smoothstep(0.0, 1.15, distance));
               water = mix(water, vec3(1.0), shimmer * 0.5);
 
               /* Se stinge spre margine, ca sa se topeasca in mal. */
