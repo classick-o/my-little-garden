@@ -146,8 +146,15 @@ const CAMERA_FOV = 42;
 /* Unghiul din care se vede gradina. Nu se schimba niciodata. */
 const CAMERA_DIRECTION = { x: 0.62, y: 0.72, z: 1 };
 
-/** Cat trebuie sa se miste degetul ca sa fie tragere, nu atingere. */
-const DRAG_THRESHOLD = 0.1;
+/**
+ * Cat trebuie sa se miste degetul ca sa fie tragere, nu atingere.
+ *
+ * Masurat in pixeli de ecran, nu in unitati din lume. Varianta in unitati din
+ * lume compara centrul parcelei cu punctul in care raza atinge solul - iar
+ * degetul pus pe frunze trimite raza dincolo de ghiveci, deci orice atingere
+ * trecea drept tragere si cardul nu se mai deschidea pe telefon.
+ */
+const DRAG_THRESHOLD = 10;
 
 /** Distanta de la care gradina incape intreaga in cadru. */
 function framingDistance(width: number, height: number): number {
@@ -183,9 +190,15 @@ export function GardenScene() {
 
   const drag = useRef<{
     id: string;
+    /* De unde a plecat degetul pe ecran: pragul se masoara fata de el. */
+    pointerX: number;
+    pointerY: number;
     startX: number;
     startZ: number;
     moved: boolean;
+    /* Distanta dintre planta si punctul de sub deget, fixata cand incepe
+       tragerea. Fara ea, planta ar sari in punctul de sub deget. */
+    grab: { x: number; z: number } | null;
   } | null>(null);
 
   const selected = plants.find((plant) => plant.id === selectedId) ?? null;
@@ -225,10 +238,26 @@ export function GardenScene() {
       setDragPoint(null);
     };
 
+    /* Pragul se urmareste pe fereastra, nu pe insula: degetul poate iesi de
+       pe ea, si atunci raza nu mai loveste nimic si nu mai vine niciun eveniment. */
+    const track = (event: PointerEvent) => {
+      const info = drag.current;
+      if (!info || info.moved) return;
+
+      const travelled = Math.hypot(
+        event.clientX - info.pointerX,
+        event.clientY - info.pointerY,
+      );
+
+      if (travelled > DRAG_THRESHOLD) info.moved = true;
+    };
+
+    window.addEventListener("pointermove", track);
     window.addEventListener("pointerup", finish);
     window.addEventListener("pointercancel", finish);
 
     return () => {
+      window.removeEventListener("pointermove", track);
       window.removeEventListener("pointerup", finish);
       window.removeEventListener("pointercancel", finish);
     };
@@ -241,7 +270,15 @@ export function GardenScene() {
       event.stopPropagation();
 
       const start = PLOTS[plant.plot];
-      drag.current = { id: plant.id, startX: start.x, startZ: start.z, moved: false };
+      drag.current = {
+        id: plant.id,
+        pointerX: event.clientX,
+        pointerY: event.clientY,
+        startX: start.x,
+        startZ: start.z,
+        moved: false,
+        grab: null,
+      };
 
       setDraggingId(plant.id);
       setDragPoint([start.x, start.z]);
@@ -251,18 +288,20 @@ export function GardenScene() {
 
   const moveDragged = useCallback((point: THREE.Vector3) => {
     const info = drag.current;
-    if (!info) return;
+
+    /* Pana cand degetul nu trece de prag, planta sta in parcela ei: altfel o
+       atingere ar muta-o cu cativa centimetri si tot ar parea tragere. */
+    if (!info || !info.moved) return;
+
+    /* Prima trecere de prag fixeaza distanta dintre planta si deget. */
+    if (!info.grab) {
+      info.grab = { x: info.startX - point.x, z: info.startZ - point.z };
+    }
 
     /* Nu lasam planta sa iasa de pe insula. */
     const limit = ISLAND_HALF - 0.6;
-    const x = Math.min(Math.max(point.x, -limit), limit);
-    const z = Math.min(Math.max(point.z, -limit), limit);
-
-    /* Comparam cu locul de plecare, nu cu cadrul anterior: altfel orice
-       tremurat de deget ar trece drept tragere si nu s-ar mai deschide cardul. */
-    if (Math.hypot(x - info.startX, z - info.startZ) > DRAG_THRESHOLD) {
-      info.moved = true;
-    }
+    const x = Math.min(Math.max(point.x + info.grab.x, -limit), limit);
+    const z = Math.min(Math.max(point.z + info.grab.z, -limit), limit);
 
     setDragPoint([x, z]);
   }, []);
@@ -374,9 +413,10 @@ export function GardenScene() {
             RIGHT: THREE.MOUSE.PAN,
           }}
           minDistance={distance * 0.4}
-          /* Departarea maxima: exact cat sa intre toata gradina cu imprejurimi.
-             Acolo nu mai are rost deplasarea, si se blocheaza singura. */
-          maxDistance={distance * 1.15}
+          /* Departarea maxima: destul cat sa se vada si insulitele si cerul
+             din jur, nu doar gradina. Acolo nu mai are rost deplasarea si se
+             blocheaza singura. */
+          maxDistance={distance * 1.75}
           target={[0, 0.3, 0]}
         />
 
