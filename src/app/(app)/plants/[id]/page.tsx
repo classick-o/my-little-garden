@@ -138,8 +138,13 @@ export default async function PlantPage({ params }: PageProps<"/plants/[id]">) {
         />
       </section>
 
+      {/* Eticheta, nu propozitie: locul e scris de ea si poate incepe cu
+          majuscula, iar "Sta Langa fereastra." arata a greseala. */}
       {plant.location ? (
-        <p className="mt-4 text-[13px] text-ink-muted">Sta {plant.location}.</p>
+        <p className="mt-4 text-[13px] text-ink-muted">
+          <span className="text-ink-subtle">Locul: </span>
+          {plant.location}
+        </p>
       ) : null}
 
       {careAdvice.length > 0 ? (

@@ -12,16 +12,24 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
+/* Aceeasi ordine ca a lui Next: fisierul de dezvoltare are prioritate, ca
+   scriptul sa vorbeasca cu aceeasi baza ca aplicatia. */
+const ENV_FILES = [".env.local", ".env.development.local"];
+
 function env() {
   const out = {};
-  try {
-    for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
-      const match = line.match(/^([A-Z_0-9]+)=(.*)$/);
-      if (match) out[match[1]] = match[2].trim();
+
+  for (const file of ENV_FILES) {
+    try {
+      for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+        const match = line.match(/^([A-Z_0-9]+)=(.*)$/);
+        if (match) out[match[1]] = match[2].trim();
+      }
+    } catch {
+      /* Fisierul poate lipsi; mergem mai departe cu ce avem. */
     }
-  } catch {
-    /* Fara .env.local mergem pe ce e deja in mediu. */
   }
+
   return { ...out, ...process.env };
 }
 

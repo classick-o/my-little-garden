@@ -4,8 +4,10 @@ import { useActionState, useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { FilePicker } from "@/components/ui/FilePicker";
 import { resizeImage } from "@/lib/image";
-import { uploadPhotoAction, OK } from "@/app/(app)/plants/actions";
+import { uploadPhotoAction } from "@/app/(app)/plants/actions";
+import { OK } from "@/app/(app)/plants/action-state";
 
 /**
  * Adaugarea unei poze la o planta.
@@ -49,16 +51,7 @@ export function PhotoUpload({ plantId }: { plantId: string }) {
       <input type="hidden" name="width" value={prepared?.width ?? ""} />
       <input type="hidden" name="height" value={prepared?.height ?? ""} />
 
-      <input
-        ref={fileInput}
-        type="file"
-        name="photo"
-        accept="image/*"
-        capture="environment"
-        required
-        onChange={prepare}
-        className="block w-full text-[13px] text-ink-muted file:mr-3 file:rounded-full file:border-0 file:bg-surface file:px-4 file:py-2 file:text-[13px] file:text-ink"
-      />
+      <FilePicker name="photo" ref={fileInput} required onChange={prepare} />
 
       {localError ?? state.error ? (
         <p className="rounded-md bg-wilt-soft px-3 py-2 text-[13px] text-wilt">

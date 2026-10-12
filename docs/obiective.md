@@ -111,23 +111,47 @@ Actualizat: 12 octombrie 2026, dupa implementarea lantului V1.
 | Ecrane | Gradina, Adauga planta, Detaliul plantei, Jurnal |
 | AI | ruta `/api/identify`, chemata din formularul de adaugare |
 
-### Ce e verificat cu adevarat
+### Ce e verificat capat la capat
 
-Doar ce nu are nevoie de baza de date:
+Pe stack-ul Supabase local, cu baza adevarata, intr-o singura trecere:
 
-* build-ul trece, tipurile si regulile de stil trec, 48 de teste trec
-* paza rutelor: `/`, `/garden`, `/journal`, `/plants/new` trimit la conectare si
-  tin minte unde voia sa ajunga; `/login` se deschide
-* pagina de conectare, vazuta la 390px
+| # | Pas | Rezultat |
+|---|---|---|
+| 1 | Intrare cu jeton | ajunge pe Gradina |
+| 2 | Gradina goala | starea goala afisata |
+| 3 | Adaugare planta, cu poza | duce la pagina plantei |
+| 4 | Detaliul | nume, "Se simte bine", "Udata astazi" |
+| 5 | Pozele | 3 imagini incarcate cu adevarat |
+| 6 | Insemnare | aparuta in istoric |
+| 7 | Jurnal | insemnare, doua poze, intrarea in gradina |
+| 8 | Gradina | planta pe card, cu coperta |
+| 9 | Sesiunea | rezista la reincarcare |
+| 10 | Iesire | duce la conectare |
 
-**Fluxurile cu date nu sunt verificate**, din motivul de la sectiunea 7.
+Fara nicio eroare in browser si fara niciun raspuns 500.
 
-### Un defect gasit si reparat pe drum
+Pe langa asta: build-ul trece, tipurile si stilul trec, 48 de teste trec, iar
+paza rutelor trimite la conectare si tine minte unde voiai sa ajungi.
 
-`proxy.ts` pus in radacina proiectului **nu ruleaza**. Trebuie sa stea langa
-`app`, adica in `src/`. Pana la mutare, fiecare ruta se deschidea fara
-autentificare - fara niciun semn ca ceva nu e in regula. Acum build-ul listeaza
-explicit `ƒ Proxy (Middleware)`, si asta e dovada ca exista.
+**Nu e verificat**: identificarea AI dintr-o poza reala si conectarea cu Google
+- vezi blocajul 2.
+
+### Defecte gasite si reparate pe drum
+
+* **`proxy.ts` in radacina proiectului nu ruleaza.** Trebuie sa stea langa
+  `app`, adica in `src/`. Pana la mutare, fiecare ruta se deschidea fara
+  autentificare - fara niciun semn ca ceva nu e in regula. Build-ul listeaza
+  acum explicit `ƒ Proxy (Middleware)`, si asta e dovada ca exista.
+* **Un fisier `"use server"` poate exporta numai functii asincrone.** O
+  constanta exportata de acolo opreste cererea, iar mesajul nu spune care e de
+  vina. Starea actiunilor sta acum in `action-state.ts`.
+* **Poza aleasa la adaugare se pierdea.** Era folosita doar pentru identificare.
+  Acum pleaca odata cu formularul si devine prima poza si coperta.
+* **Next refuza imaginile de pe IP-uri private**, ca protectie impotriva SSRF -
+  deci nicio poza nu se vedea pe stack-ul local. Exceptia e pornita numai cand
+  gazda chiar e locala.
+* **Campul de fisier isi scrie singur textul, in engleza** - "Choose File / No
+  file chosen". Nu se poate traduce, deci e ascuns si inlocuit cu `FilePicker`.
 
 ---
 

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { OK, type ActionState } from "./action-state";
+
 import { SUNLIGHT_LEVELS } from "@/services/ai/schemas";
 import { addNote } from "@/repositories/events";
 import { uploadPhoto } from "@/repositories/photos";
@@ -23,10 +25,6 @@ import {
  * Fiecare actiune intoarce o stare, nu arunca: formularul trebuie sa poata
  * arata mesajul fara sa prabuseasca ecranul.
  */
-
-export type ActionState = { error: string | null };
-
-export const OK: ActionState = { error: null };
 
 const plantFormSchema = z.object({
   name: z
@@ -102,6 +100,22 @@ export async function addPlantAction(
     });
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Nu s-a putut salva." };
+  }
+
+  /* Poza aleasa la adaugare devine prima poza si coperta. Fara pasul asta ar
+     fi folosita doar la identificare si pierduta - iar ea ar trebui sa o adauge
+     a doua oara, din ecranul plantei.
+
+     Esecul aici nu anuleaza planta: planta exista si e ce conteaza. */
+  const photo = formData.get("photo");
+
+  if (photo instanceof File && photo.size > 0) {
+    try {
+      const uploaded = await uploadPhoto({ plantId: id, file: photo });
+      await updatePlant(id, { coverPhotoId: uploaded.id });
+    } catch (error) {
+      console.error("Poza nu a putut fi salvata la adaugare:", error);
+    }
   }
 
   revalidatePath("/");

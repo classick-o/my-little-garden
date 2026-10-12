@@ -3,7 +3,8 @@
 import { useActionState, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { addNoteAction, OK } from "@/app/(app)/plants/actions";
+import { addNoteAction } from "@/app/(app)/plants/actions";
+import { OK } from "@/app/(app)/plants/action-state";
 
 /**
  * Scrierea unei insemnari.

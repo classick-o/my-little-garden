@@ -63,6 +63,30 @@ ipconfig
 Daca tot nu se incarca, firewall-ul Windows blocheaza portul: la prima rulare cere
 permisiune pentru Node.js si trebuie acceptata pentru reteaua privata.
 
+## Supabase local
+
+Pentru dezvoltare se poate rula intreg Supabase pe calculator, cu Docker:
+
+```bash
+npx supabase start     # porneste; prima data descarca imaginile
+npx supabase db reset  # aplica migratiile si supabase/seed.sql
+npx supabase stop      # opreste
+```
+
+Valorile stack-ului local se scriu in `.env.development.local`, pe care Next il
+citeste **numai** la `npm run dev`. `.env.local`, cu valorile din cloud, ramane
+neatins si e folosit de build-ul de productie. Asa nu exista momentul in care
+nu mai stii catre ce baza vorbesti.
+
+Intrarea in cont, cat timp nu exista clientul Google OAuth:
+
+```bash
+npm run dev:login -- dev@local.test
+```
+
+Adresa e samanta din `supabase/seed.sql`. Comanda tipareste o legatura de unica
+folosinta; o deschizi in browser si esti conectat.
+
 ## Comenzi
 
 | Comanda | Ce face |

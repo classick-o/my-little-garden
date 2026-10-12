@@ -5,8 +5,10 @@ import Image from "next/image";
 import { Camera, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { FilePicker } from "@/components/ui/FilePicker";
 import { resizeImage } from "@/lib/image";
-import { addPlantAction, OK } from "../actions";
+import { addPlantAction } from "../actions";
+import { OK } from "../action-state";
 import type { PlantIdentification } from "@/services/ai";
 
 /**
@@ -40,6 +42,7 @@ export function NewPlantForm() {
   const [identified, setIdentified] = useState<Identified | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  const photoField = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const speciesRef = useRef<HTMLInputElement>(null);
   const intervalRef = useRef<HTMLInputElement>(null);
@@ -55,6 +58,13 @@ export function NewPlantForm() {
     try {
       const resized = await resizeImage(file);
       setPhoto(resized.file);
+
+      /* Punem poza micsorata in campul ascuns, ca sa plece odata cu formularul
+         si sa devina prima poza a plantei. Campul vizibil nu are nume, deci
+         originalul de cateva megabytes nu se trimite. */
+      const transfer = new DataTransfer();
+      transfer.items.add(resized.file);
+      if (photoField.current) photoField.current.files = transfer.files;
 
       /* Adresa veche se elibereaza, altfel fiecare poza aleasa lasa in urma
          un obiect care nu mai e eliberat niciodata. */
@@ -114,7 +124,7 @@ export function NewPlantForm() {
     <form action={submit} className="mt-6 space-y-5">
       {/* --- Poza si identificarea ------------------------------------- */}
       <section className="glass rounded-xl p-4">
-        <label className="block">
+        <div>
           <span className="text-[13px] text-ink-muted">Poza plantei</span>
 
           <div className="mt-2 flex items-center gap-3">
@@ -128,15 +138,9 @@ export function NewPlantForm() {
               )}
             </div>
 
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={pickPhoto}
-              className="block w-full text-[13px] text-ink-muted file:mr-3 file:rounded-full file:border-0 file:bg-surface file:px-4 file:py-2 file:text-[13px] file:text-ink"
-            />
+            <FilePicker label="Fa o poza" onChange={pickPhoto} />
           </div>
-        </label>
+        </div>
 
         <Button
           type="button"
@@ -229,6 +233,9 @@ export function NewPlantForm() {
       {/* Sfaturile de la asistent calatoresc cu formularul, ca sa ajunga in
           `plants.care` fara inca o cerere. */}
       <input type="hidden" name="care" value={identified?.careJson ?? ""} />
+
+      {/* Poza micsorata, trimisa odata cu planta. */}
+      <input ref={photoField} type="file" name="photo" className="sr-only" tabIndex={-1} />
 
       {state.error ? (
         <p className="rounded-md bg-wilt-soft px-4 py-3 text-[13px] text-wilt">
