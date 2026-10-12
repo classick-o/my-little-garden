@@ -98,60 +98,80 @@ Toate au deja locul lor: V1.5 si V2 in `first-context.md`, restul in
 
 ## 6. Unde suntem acum
 
-Onest, pe 12 octombrie 2026.
+Actualizat: 12 octombrie 2026, dupa implementarea lantului V1.
 
-### Ce e construit si verificat
+### Ce e scris si compileaza
 
-* **Baza de date** - schema aplicata, RLS pe tot, bucket privat, declansator pe lista de
-  acces. Verificata cu `npm run verify:db`.
-* **Stratul AI** - identificare cu Gemini, iesire structurata si validata, clasificare a
-  erorilor, reincercare la indisponibilitate. Verificat cu un test live real.
-* **Sistemul de design** - tokeni, si componentele buton, card de jos, inel de progres,
-  pastila de stare, cifra cu eticheta.
-* **Gradina 3D** - pagina intreaga la `/garden`, cu plante de proba.
-* **Livrare** - verificari automate pe `main`, migratii aplicate automat.
+| Strat | Ce contine |
+|---|---|
+| Acces la date | clientii Supabase (browser, server, administrare), `src/proxy.ts` care reimprospateaza sesiunea si pazeste rutele |
+| Depozite | plante, evenimente, poze - singurele locuri care vorbesc cu Supabase |
+| Autentificare | pagina de conectare, intoarcerea de la Google, intrarea pe baza de jeton, iesirea din cont |
+| Actiuni | adaugare, udare, insemnare, incarcare de poza, coperta, stergere - toate cu validare |
+| Ecrane | Gradina, Adauga planta, Detaliul plantei, Jurnal |
+| AI | ruta `/api/identify`, chemata din formularul de adaugare |
 
-### Ce nu e construit
+### Ce e verificat cu adevarat
 
-**Din cele opt verigi ale V1, niciuna nu functioneaza.**
+Doar ce nu are nevoie de baza de date:
 
-Concret: in `src/` nu exista niciun apel catre Supabase. Nu exista autentificare. Cele
-patru ecrane din navigatie - Descopera, Jurnal, Asistent, Adauga planta - sunt cioturi de
-8-11 linii. Identificarea AI exista ca serviciu, dar niciun ecran nu o cheama.
+* build-ul trece, tipurile si regulile de stil trec, 48 de teste trec
+* paza rutelor: `/`, `/garden`, `/journal`, `/plants/new` trimit la conectare si
+  tin minte unde voia sa ajunga; `/login` se deschide
+* pagina de conectare, vazuta la 390px
 
-### Observatia care conteaza
+**Fluxurile cu date nu sunt verificate**, din motivul de la sectiunea 7.
 
-Am construit in profunzime partile placute - vizualul, gradina 3D, atmosfera - si n-am
-atins deloc lantul V1. Asta nu e munca pierduta: schema, stratul AI si sistemul de design
-sunt exact fundatia de care are nevoie lantul. Dar **ea inca nu poate sa intre in
-aplicatie si sa adauge o planta**, iar asta e singurul lucru care conteaza acum.
+### Un defect gasit si reparat pe drum
 
-Sectiunea 7 pune ordinea la loc.
+`proxy.ts` pus in radacina proiectului **nu ruleaza**. Trebuie sa stea langa
+`app`, adica in `src/`. Pana la mutare, fiecare ruta se deschidea fara
+autentificare - fara niciun semn ca ceva nu e in regula. Acum build-ul listeaza
+explicit `ƒ Proxy (Middleware)`, si asta e dovada ca exista.
 
 ---
 
-## 7. Ordinea de lucru
+## 7. Blocaje
 
-Fiecare pas se termina cu ceva ce ea poate face. Nimic nu se incepe inainte ca pasul
-anterior sa fie folosibil.
+Scrise ca sa nu se piarda. Niciunul nu se poate rezolva din cod.
 
-| # | Pas | Ea poate... | Blocat de |
-|---|---|---|---|
-| 1 | Autentificare | sa intre in aplicatie | client Google OAuth, de creat de tine |
-| 2 | Depozit de plante + adaugare manuala | sa adauge o planta si sa o vada | - |
-| 3 | Detaliile plantei + udare | sa marcheze udarea si sa vada cand urmeaza | - |
-| 4 | Poze | sa adauge poze unei plante | - |
-| 5 | Identificare AI in ecranul de adaugare | sa afle ce specie e | - |
-| 6 | Jurnal | sa scrie si sa citeasca insemnari | - |
-| 7 | Notificari | sa primeasca sumarul de dimineata | instalare pe ecranul principal |
+### 1. Proiectul Supabase nu raspunde
 
-Dupa pasul 7, V1 e gata. Abia apoi: legarea gradinii 3D la plantele adevarate.
+Subdomeniul proiectului nu se mai rezolva in DNS, desi internetul si
+`supabase.com` merg. Cel mai probabil proiectul e oprit - proiectele gratuite se
+opresc dupa o perioada de inactivitate, iar ultima atingere a fost pe
+11 septembrie.
 
-### Doua lucruri blocate pe tine
+**Blocheaza:** verificarea tuturor fluxurilor cu date. Codul e scris, dar nimeni
+nu a vazut inca o planta salvata.
 
-1. **Clientul Google OAuth** - fara el nu incepe pasul 1, deci nimic.
-2. **Legatura Vercel-GitHub** - fara ea nu exista link permanent, iar testarea pe telefon
-   depinde de calculatorul meu pornit.
+**Doua remedii:**
+
+* **Repornirea proiectului** din panoul Supabase (buton *Restore*). Pastreaza
+  decizia "un singur mediu" si datele existente.
+* **Supabase local, cu Docker.** Docker e instalat, dar nu pornit. Ar da
+  independenta totala fata de cloud pentru dezvoltare, cu pretul unui al doilea
+  mediu - adica exact impotriva deciziei din 10 septembrie.
+
+### 2. Clientul Google OAuth nu exista
+
+Conectarea adevarata nu are cum sa functioneze fara el.
+
+**Ocolire pentru local:** `npm run dev:login -- adresa@exemplu.com` genereaza un
+jeton de unica folosinta prin Supabase si tipareste o legatura de intrare. Nu e
+o usa din dos: jetonul e emis de Supabase, expira, iar adresa trebuie sa fie pe
+lista de acces. Ruta care il preschimba, `/auth/confirm`, e tiparul standard
+pentru legaturi magice si va fi oricum necesara.
+
+### 3. Vercel nu e legat de GitHub
+
+Fara el nu exista link permanent, iar testarea pe telefon depinde de
+calculatorul meu pornit.
+
+### 4. Notificarile nu se pot proba local
+
+Web Push pe iOS cere HTTPS si aplicatia instalata pe ecranul principal. Nu se
+poate verifica decat dupa ce exista o adresa publica.
 
 ---
 
@@ -159,9 +179,10 @@ Dupa pasul 7, V1 e gata. Abia apoi: legarea gradinii 3D la plantele adevarate.
 
 Lucruri care schimba planul si pe care nu le pot hotari eu:
 
-1. **Exista un termen?** O aniversare, o ocazie. Schimba totul: cu termen, V1 se taie la
-   pasii 1-3 si restul vine dupa. Fara termen, mergem pe lantul complet.
-2. **Stie ea de aplicatie?** Daca e surpriza, pasul 1 are nevoie si de contul ei de
-   Google, si de un moment ales pentru prima deschidere.
-3. **Are plante care asteapta?** Cate sunt decide daca adaugarea in masa merita facuta, si
+1. **Cum deblocam baza de date** - repornire in cloud sau stack local cu Docker. Vezi
+   blocajul 1. Pana atunci, nimic cu date nu se poate proba.
+2. **Exista un termen?** O aniversare, o ocazie. Schimba ce se lustruieste intai.
+3. **Stie ea de aplicatie?** Daca e surpriza, pasul 1 are nevoie si de contul ei de
+   Google, si un moment ales pentru prima deschidere.
+4. **Are plante care asteapta?** Cate sunt decide daca adaugarea in masa merita facuta, si
    daca gradina 3D are suficiente plante ca sa arate a gradina.

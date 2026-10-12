@@ -68,6 +68,7 @@ permisiune pentru Node.js si trebuie acceptata pentru reteaua privata.
 | Comanda | Ce face |
 |---|---|
 | `npm run dev` | Server de dezvoltare (accesibil si din reteaua locala) |
+| `npm run dev:login -- adresa@exemplu.com` | Legatura de intrare pentru dezvoltare, pana exista clientul Google OAuth |
 | `npm run build` | Build de productie |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Verificare de tipuri |
