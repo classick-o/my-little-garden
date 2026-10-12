@@ -9,6 +9,9 @@ Acest fisier (`CLAUDE.md`) nu il inlocuieste. El:
 1. inregistreaza deciziile luate impreuna cu proprietarul proiectului
 2. mapeaza sectiunile scrise pentru Flutter din `first-context.md` pe stack-ul real (Next.js)
 
+[docs/obiective.md](docs/obiective.md) spune **ce urmarim, in ce ordine si cum stim ca am
+reusit**. Cand nu e clar ce merita facut in continuare, acolo e raspunsul.
+
 Unde acest fisier contrazice `first-context.md`, **acest fisier castiga** — dar numai pentru
 punctele listate explicit mai jos. Pentru tot restul, `first-context.md` ramane obligatoriu.
 
